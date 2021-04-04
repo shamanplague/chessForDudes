@@ -44,7 +44,7 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
     let token = this.JwtService.sign(payload)
     this.UsersService.assignToken(User.username, token)
     console.log('generated token', token)
-    this.server.emit('sendTokenFromServer', { token })
+    this.server.emit('tokenFromServer', { token })
   }
 
   @SubscribeMessage('createGame')
