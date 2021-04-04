@@ -1,0 +1,5 @@
+/backend/dist
+/backend/node
+/backend/test
+
+/frontend/node_modules
