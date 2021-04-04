@@ -1,4 +1,4 @@
-import { Injectable, PipeTransform } from '@nestjs/common'
+import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common'
 import { MessageBody } from '@nestjs/websockets'
 import { UsersService } from '../../users/users.service'
 
@@ -9,10 +9,12 @@ export class AnonymousUsersPipe implements PipeTransform {
         private usersService: UsersService
     ) {}
 
-    async transform(@MessageBody() messageBody) {
-        let userForReturn = messageBody
+    async transform(value: any, metadata: ArgumentMetadata) {
+        let userForReturn = value
 
-        if (messageBody.isAnonymous) {
+        console.log('На пайпе', value)
+
+        if (value.isAnonymous) {
             userForReturn = await this.usersService.addAnonymousUser()
         }
 

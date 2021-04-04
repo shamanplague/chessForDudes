@@ -1,11 +1,10 @@
 import { NestFactory } from '@nestjs/core'
-import { AppModule } from './app.module'
-import { JwtGuard } from './websockets/guards/ws-jwt.guard'
+import { GatewayModule } from './websockets/socket.module'
 
 declare const module: any
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true })
+  const app = await NestFactory.create(GatewayModule, { cors: true })
   await app.listen(3000)
 }
 bootstrap();

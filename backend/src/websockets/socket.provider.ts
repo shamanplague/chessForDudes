@@ -7,16 +7,16 @@ import {
   OnGatewayDisconnect,
   MessageBody,
 } from '@nestjs/websockets'
-import { Logger, UseGuards, UsePipes } from '@nestjs/common'
+import { Logger, Req, UseGuards, UsePipes } from '@nestjs/common'
 import { Socket, Server } from 'socket.io'
-import { AnonymousUsersPipe } from './pipes/AnonymousUsersPipe'
+import { AnonymousUsersPipe } from './pipes/anonymous-users.pipe'
 import { LocalGuard } from './guards/ws-local.guard'
 import { JwtGuard } from './guards/ws-jwt.guard'
 import { JwtService } from '@nestjs/jwt'
 import { Public } from '../decorators/public.decorator'
 import { GameService } from '../game/game.service'
 import { User } from 'src/users/user'
-import { UserToken } from 'src/decorators/user_token.decorator'
+import { UserToken } from 'src/decorators/user-token.decorator'
 import { UsersService } from '../users/users.service'
 
 @UseGuards(JwtGuard)
@@ -28,7 +28,7 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
     private UsersService : UsersService
   ) {}
   @WebSocketServer() 
-  server: Server
+  private server: Server
 
   private logger: Logger = new Logger('WebSocketGateway')
 
@@ -36,26 +36,67 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
   @UseGuards(LocalGuard)
   @SubscribeMessage('login')
   handleLogin (
-    @MessageBody(AnonymousUsersPipe) User
+    @Req() client: Socket,
+    @MessageBody(AnonymousUsersPipe) user
   ): void
   {
-    const payload = { username: User.username, sub: User.id }
+    const payload = { username: user.username, sub: user.id }
 
     let token = this.JwtService.sign(payload)
-    this.UsersService.assignToken(User.username, token)
+    this.UsersService.assignToken(user.username, token)
     console.log('generated token', token)
-    this.server.emit('tokenFromServer', { token })
+    client.emit('tokenFromServer', { token })
   }
 
   @SubscribeMessage('createGame')
-  async handleMessage(
+  async handleCreateGame(
+    @Req() client: Socket,
     @UserToken() hosterToken: string
   ) {
     let game = await this.GameService.createGame(hosterToken)
-    this.server.emit('gameList', { game : this.GameService.getGameForSending(game) })
+
+    // console.log('Создали', game)
+
+    // console.log('this.server.clients()', this.server.clients().connected)
+    
+    this.server.emit('gameList', { games : this.GameService.getGameListForSending(hosterToken) })
   }
 
+  @SubscribeMessage('gameList')
+  async handleGameList(
+    @UserToken() hosterToken: string
+  ) {
+    // console.log('Отправляем игры', this.GameService.getGameListForSending(hosterToken))
+    this.server.emit('gameList', { games : this.GameService.getGameListForSending(hosterToken) })
+  }
+  
+  @SubscribeMessage('gameCreatedByUser')
+  async handleGameCreatedByUser(
+    @Req() client: Socket,
+    @UserToken() userToken: string
+  ) {
+    client.emit('gameCreatedByUser', { games : this.GameService.getGamesCreatedByUser(userToken) })
+  }
 
+  @SubscribeMessage('joinGameAsPlayer')
+  async handleJoinGameAsPlayer(
+    @UserToken() clientToken: string,
+    @MessageBody() payload
+  ) {
+    let user = await this.UsersService.findByToken(clientToken)
+    console.log('payload', payload)
+    console.log(`User ${user.getId()} want to join`)
+  }
+
+  @SubscribeMessage('joinGameAsSpectrator')
+  async handleJoinGameAsSpectrator(
+    @UserToken() clientToken: string,
+    @MessageBody() payload
+  ) {
+    let user = await this.UsersService.findByToken(clientToken)
+    console.log('payload', payload)
+    console.log(`User ${user.getId()} want to join`)
+  }
 
   afterInit(server: Server) {
     this.logger.log('Init');

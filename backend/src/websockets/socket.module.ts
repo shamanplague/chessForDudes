@@ -7,12 +7,13 @@ import { GameService } from 'src/game/game.service'
 
 @Module({
   imports: [
+    // UsersService, GameService,
     JwtModule.register({
     secret: jwtConstants.secret,
-    signOptions: { expiresIn: '60s' },
+    signOptions: { expiresIn: '1000s' },
   })
   ],
-  providers: [Gateway, UsersService, GameService, UsersService],
-  exports: [JwtModule]
+  providers: [Gateway, UsersService, GameService],
+  exports: [JwtModule, GameService]
 })
 export class GatewayModule {}

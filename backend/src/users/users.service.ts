@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import { Socket } from 'socket.io'
 import { User } from './user'
 
 
@@ -13,7 +12,7 @@ export class UsersService {
   ]
 
   private nextUserIdGenerator = function* gen() {
-    let i = 0
+    let i = 1
     while (true) {
        yield i++
     }   
@@ -67,7 +66,7 @@ export class UsersService {
       this.nextUserIdGenerator.next().value,
       userData.getUsername(),
       userData.getPassword(),
-      'Bearer ' + token.access_token,
+      token.access_token,
       false
     ))
   }

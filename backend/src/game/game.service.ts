@@ -26,6 +26,8 @@ export class GameService {
 
     let hoster = await this.UsersService.findByToken(hosterToken)
 
+    console.log('Хуёстер', hoster)
+
     let game = new Game(
       this.nextGameIdGenerator.next().value,
       this.gameStatuses.PREPARING,
@@ -34,8 +36,6 @@ export class GameService {
       []
     )
     this.games.push(game)
-
-    // console.log('games', this.games)
 
     return game
   }
@@ -52,20 +52,33 @@ export class GameService {
   // }
       
   joinGame (): Boolean { //// { game_id: number }
-    
     return true
   }
 
-  getGameListForSending () {
+  getGamesCreatedByUser (userToken: string): Array<Number> {
+    console.log('userToken', userToken)
+    return this.games
+    .filter(item => item.getHoster().getToken() === userToken)
+    .map(item => item.getId())
+  }
+
+  getGameListForSending (userToken : string): Array<Object> {
     return this.games.map(item => this.getGameForSending(item))
   }
 
   getGameForSending (game: Game): Object {
-    
+
+    console.log('game', game)
+
+   let hoster = game.getHoster().isAnonymous() ?
+    'anonymous'
+    :
+    game.getHoster().getUsername()
+
     return {
       id: game.getId(),
       status: game.getStatus(),
-      hoster: game.getHoster().isAnonymous() ? 'anonymous' : game.getHoster().getUsername()//лишнее
+      hoster
     }
 
   }

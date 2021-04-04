@@ -11,8 +11,5 @@ export const UserToken = createParamDecorator(
     .match(/(?<=userToken=).*?(?=(;|$))/)[0]
     
     return token
-
-    // const request = ctx.switchToHttp().getRequest();
-    // return request.user;
   },
 )

@@ -8,6 +8,10 @@ export class User {
     private anonymous: boolean,
   ) {}
 
+  getId () {
+    return this.id
+  }
+
   getUsername () : string {
     return this.username
   }

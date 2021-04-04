@@ -1,13 +1,15 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common"
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common"
 import { Reflector } from "@nestjs/core"
 import { JwtService } from '@nestjs/jwt'
+import { UsersService } from "src/users/users.service"
 
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   constructor(
     private JwtService: JwtService,
-    private reflector: Reflector
+    private reflector: Reflector,
+    private UsersService: UsersService
   )
   {}
 
@@ -30,11 +32,22 @@ export class JwtGuard implements CanActivate {
     // .headers
     // .cookie)
 
-    // console.log('token', token)
+    console.log('token', token)
 
     let verifyResult = await this.JwtService.verify(token)
 
+    let userExisting = await this.UsersService.findByToken(token)
+
     console.log('verifyResult', verifyResult)
+    console.log('userExisting', userExisting)
+
+    let res = Boolean(verifyResult) && Boolean(userExisting)
+
+    if (!res) {
+      throw new UnauthorizedException(403)
+    }
+
+    let result = verifyResult
 
     return verifyResult
 
