@@ -1,0 +1,9 @@
+.warnings-wrapper {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.warnings {
+  width: 80vw;
+  margin: auto;
+}
