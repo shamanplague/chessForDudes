@@ -7,7 +7,6 @@ import { GameService } from 'src/game/game.service'
 
 @Module({
   imports: [
-    // UsersService, GameService,
     JwtModule.register({
     secret: jwtConstants.secret,
     signOptions: { expiresIn: '1000s' },

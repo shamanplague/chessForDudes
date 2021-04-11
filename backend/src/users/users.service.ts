@@ -49,8 +49,8 @@ export class UsersService {
   }
 
   async findByToken(token: string): Promise<User | undefined> {
-    console.log('this.users', this.users)
-    console.log('token', token)
+    // console.log('this.users', this.users)
+    // console.log('token', token)
     return this.users.find(user => user.getToken() === token)
   }
 

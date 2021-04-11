@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common'
+import { WsException } from '@nestjs/websockets'
+import { User } from 'src/users/user'
 import { UsersService } from '../users/users.service'
 import { Game } from './game'
 
@@ -26,8 +28,6 @@ export class GameService {
 
     let hoster = await this.UsersService.findByToken(hosterToken)
 
-    console.log('Хуёстер', hoster)
-
     let game = new Game(
       this.nextGameIdGenerator.next().value,
       this.gameStatuses.PREPARING,
@@ -51,34 +51,64 @@ export class GameService {
   //   return this
   // }
       
-  joinGame (): Boolean { //// { game_id: number }
-    return true
+  joinGame (user: User, gameId: number, asPlayer: boolean): Boolean { //// { game_id: number }
+    console.log(`User ${user.getId()} want to join to game ${gameId}`)
+    
+    let neededGame = this.games.find(item => item.getId() === gameId)
+
+    if (neededGame.getHoster().getId() === user.getId()) {
+      throw new WsException('You are hoster')
+    } else {
+      if (asPlayer) {
+        neededGame.addPlayer(user)
+      } else {
+        neededGame.addSpectrator(user)
+      }
+
+      // console.log('Добавили юзера в игру', neededGame)
+
+      return true
+    }
   }
 
   getGamesCreatedByUser (userToken: string): Array<Number> {
-    console.log('userToken', userToken)
     return this.games
     .filter(item => item.getHoster().getToken() === userToken)
     .map(item => item.getId())
   }
 
-  getGameListForSending (userToken : string): Array<Object> {
+  getGamesJoinedByUser (userToken: string): Array<Number> {
+    return this.games
+    .filter(item => item.getHoster().getToken() === userToken)
+    .map(item => item.getId())
+  }
+
+  getGameListForSending (): Array<Object> {
     return this.games.map(item => this.getGameForSending(item))
   }
 
   getGameForSending (game: Game): Object {
-
-    console.log('game', game)
-
    let hoster = game.getHoster().isAnonymous() ?
     'anonymous'
     :
     game.getHoster().getUsername()
 
+    let players = game
+    .getPlayers()
+    .map(item => {
+      return item.isAnonymous() ? 'anonymous' : item.getUsername()
+    })
+
+    let spectrators = game
+    .getSpectrators()
+    .map(item => item.getUsername())
+
     return {
       id: game.getId(),
       status: game.getStatus(),
-      hoster
+      hoster,
+      players,
+      spectrators
     }
 
   }

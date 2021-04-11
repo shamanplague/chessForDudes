@@ -8,12 +8,6 @@
       <button @click="createGame()">
         Создать игру
       </button>
-      <button @click="joinGame(1)">
-        Войти в игру №1
-      </button>
-      <button @click="joinGame(2)">
-        Войти в игру №2
-      </button>
     </div>
 
     <div class="lobby">
@@ -21,9 +15,17 @@
         <span>{{ game.id }}</span>
         <span>{{ game.status }}</span>
         <span>{{ game.hoster }}</span>
-        <span>{{ game.myGame }}</span>
+        <!-- <button @click="joinGame(game.id)" :disabled="game.myGame"> -->
+        <button @click="joinGame(game.id, true)">
+          Войти
+        </button>
+        <button @click="joinGame(game.id, false)">
+          Наблюдать
+        </button>
       </div>
     </div>
+
+    {{ user }}
 
   </div>
 </template>
@@ -31,6 +33,7 @@
 <script>
 
 import Vue from 'vue'
+import _ from 'lodash'
 
 export default {
   data () {
@@ -43,7 +46,6 @@ export default {
       console.log('Соккеты подцепились')
     },
     tokenFromServer () {
-      console.log('Катим тута')
       setTimeout(() => {
         this.$socket.disconnect()
         this.$socket.connect()
@@ -51,7 +53,7 @@ export default {
     },
     gameCreatedByUser (v) {
       console.log('gameCreatedByUser', v)
-      this.filteredGameList = this.filteredGameList
+      this.filteredGameList = this.newFilteredGameList
       .map(item => {
         if (v.games.includes(item.id)) {
           item.myGame = true
@@ -64,32 +66,46 @@ export default {
     }
   },
   mounted() {
-    let cookieToken = Vue.$cookies.get('userToken')
-    if (!cookieToken) {
+    // let cookieToken = Vue.$cookies.get('userToken')
+    // if (!cookieToken) {
+      console.log('Делаем анонимный токен')
       this.loginAsAnonymous()
-    }
+      // console.log('Заходим как Garfield')
+      // this.loginAsGarfield()
+    // }
   },
   watch : {
     gameList (v) {
-      this.filteredGameList = v
+      this.newFilteredGameList = v
       this.$socket.emit('gameCreatedByUser')
+    },
+    filteredGameList (v) {
+      console.log('filteredGameList изменился', v)
     }
   },
   computed : {
     gameList () {
       return this.$store.state.games
+    },
+    user () {
+      console.log('this.$store.state.user', this.$store.state.user)
+      return this.$store.state.user
     }
   },
   methods : {
+    // deleteError (id) {
+    //   this.$store.dispatch('deleteBackendError', id)
+    // },
     getGameList () {
       this.$socket.emit('gameList')
-      setTimeout(() => {
-        console.log('this.$store.state.games', this.$store.state.games)
-      }, 500)
+      // setTimeout(() => {
+      //   console.log('this.$store.state.games', this.$store.state.games)
+      // }, 500)
     },
-    joinGame (id) {
-      this.$socket.emit('joinGameAsPlayer', {
-        game_id: id
+    joinGame (id, asPlayer) {
+      this.$socket.emit('joinGame', {
+        game_id: id,
+        asPlayer
       })
     },
     loginAsAnonymous () {
@@ -97,6 +113,13 @@ export default {
         username: 'anonymous',
         password: 'anonymous',
         isAnonymous: true
+      })
+    },
+    loginAsGarfield () {
+      this.$socket.emit('login', {
+        username: 'garfield',
+        password: 'garfield',
+        isAnonymous: false
       })
     },
     createGame () {

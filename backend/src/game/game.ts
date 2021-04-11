@@ -9,8 +9,8 @@ export class Game {
     private id: number,
     private status: string,
     private hoster: User,
-    players: Array<User>,
-    spectrators: Array<User>
+    private players: Array<User>,
+    private spectrators: Array<User>
   ) {}
 
   getId () {
@@ -22,5 +22,17 @@ export class Game {
   getHoster () {
     return this.hoster
   }
-	
+  addPlayer (user: User) {
+    this.players.push(user)
+  }
+	addSpectrator (user: User) {
+    this.spectrators.push(user)
+  }
+  getPlayers () {
+    return this.players
+  }
+  getSpectrators () {
+    return this.spectrators
+  }
+
 }
