@@ -38,7 +38,7 @@ export const actions = {
     commit('refreshGameList', data.games)
   },
   
-  SOCKET_gameCreatedByUser () {
+  SOCKET_gameManagenentData () {
 
   },
   SOCKET_exception  ({ state, commit }, data) {

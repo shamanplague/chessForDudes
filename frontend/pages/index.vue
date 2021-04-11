@@ -15,15 +15,23 @@
         <span>{{ game.id }}</span>
         <span>{{ game.status }}</span>
         <span>{{ game.hoster }}</span>
-        <span>{{ game.myGame }}</span>
-        <!-- <button @click="joinGame(game.id)" :disabled="game.myGame"> -->
-        <button @click="joinGame(game.id, true)">
+        <button v-if="game.myGame" @click="deleteGame(game.id)">
+          Отменить
+        </button>
+        <button v-if="game.myGame" @click="startGame(game.id)">
+          Начать игру
+        </button>
+        <button v-if="!game.myGame && !game.forPlaying" @click="joinGame(game.id, true)">
           Войти
         </button>
-        <button @click="joinGame(game.id, false)">
+        <button v-if="!game.myGame && game.forPlaying" @click="exitGame(game.id, true)">
+          Выйти
+        </button>
+        <button v-if="!game.myGame && !game.forSpectrating" @click="joinGame(game.id, false)">
           Наблюдать
-        </button><button @click="deleteGame(game.id)">
-          Отменить
+        </button>
+        <button v-if="!game.myGame && game.forSpectrating" @click="exitGame(game.id, false)">
+          Не наблюдать
         </button>
       </div>
     </div>
@@ -51,14 +59,32 @@ export default {
         this.$socket.connect()
       }, 300)
     },
-    gameCreatedByUser (v) {
-      console.log('gameCreatedByUser', v)
+    anonymousTokenFromServer () {
+      setTimeout(() => {
+        this.$socket.disconnect()
+        this.$socket.connect()
+      }, 300)
+    },
+    gameManagenentData (v) {
+      console.log('gameManagenentData', v)
       this.filteredGameList = this.newFilteredGameList
       .map(item => {
-        if (v.games.includes(item.id)) {
+        if (v.created_games.includes(item.id)) {
           item.myGame = true
         } else {
           item.myGame = false
+        }
+
+        if (v.joined_games.includes(item.id)) {
+          item.forPlaying = true
+        } else {
+          item.forPlaying = false
+        }
+
+        if (v.spectrated_games.includes(item.id)) {
+          item.forSpectrating = true
+        } else {
+          item.forSpectrating = false
         }
 
         return item
@@ -78,17 +104,29 @@ export default {
     gameList (v) {
       if (this.user.isAnonymous) {
         this.newFilteredGameList = v
-        this.$socket.emit('gameCreatedByUser')
+        this.$socket.emit('gameManagenentData')
       } else {
         this.newFilteredGameList = v
 
         this.filteredGameList = v
         .map(item => {
           console.log('item', item.players.includes(this.user.name))
-          if (item.players.includes(this.user.name)) {
+          if (item.hoster === this.user.name) {
             item.myGame = true
           } else {
             item.myGame = false
+          }
+
+          if (item.players.includes(this.user.name)) {
+            item.forPlaying = true
+          } else {
+            item.forPlaying = false
+          }
+
+          if (item.spectrators.includes(this.user.name)) {
+            item.forSpectrating = true
+          } else {
+            item.forSpectrating = false
           }
 
           return item
@@ -109,6 +147,14 @@ export default {
     }
   },
   methods : {
+    exitGame () {
+      console.log('Выходим из игры')
+    },
+    startGame (id) {
+      this.$socket.emit('startGame', {
+        game_id: id
+      })
+    },
     // deleteError (id) {
     //   this.$store.dispatch('deleteBackendError', id)
     // },

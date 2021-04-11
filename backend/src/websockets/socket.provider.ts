@@ -9,14 +9,14 @@ import {
   ConnectedSocket,
   WsException,
 } from '@nestjs/websockets'
-import { Body, HostParam, Logger, Param, ParseBoolPipe, Query, Req, UseGuards, UsePipes } from '@nestjs/common'
+import { Logger, UseGuards } from '@nestjs/common'
 import { Socket, Server } from 'socket.io'
 import { AnonymousUsersPipe } from './pipes/anonymous-users.pipe'
 import { LocalGuard } from './guards/ws-local.guard'
 import { JwtGuard } from './guards/ws-jwt.guard'
 import { JwtService } from '@nestjs/jwt'
 import { Public } from '../decorators/public.decorator'
-import { GameService } from '../game/game.service'
+import { GameService } from '../game-management/game-management.service'
 import { User } from 'src/users/user'
 import { UserToken } from 'src/decorators/user-token.decorator'
 import { UsersService } from '../users/users.service'
@@ -46,7 +46,6 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
 
     let token = this.JwtService.sign(payload)
     this.UsersService.assignToken(user.username, token)
-    // console.log('generated token', token)
     if (user.isAnonymous) {
       client.emit('anonymousTokenFromServer', { token })
     } else {
@@ -59,7 +58,7 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
   async handleCreateGame(
     @UserToken() hosterToken: string
   ) {
-    let game = await this.GameService.createGame(hosterToken)    
+    await this.GameService.createGame(hosterToken)    
     this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
   }
 
@@ -68,7 +67,6 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
     @UserToken() clientToken: string,
     @MessageBody() payload
   ) {
-    console.log('payload', payload)
     let user = await this.UsersService.findByToken(clientToken)
 
     this.GameService.joinGame(user, payload.game_id, payload.asPlayer)
@@ -80,35 +78,41 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
     @UserToken() clientToken: string,
     @MessageBody() payload
   ) {
-    console.log('delete payload', payload)
     let user = await this.UsersService.findByToken(clientToken)
 
     this.GameService.deleteGame(user, payload.game_id)
     this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
   }
 
+  @SubscribeMessage('startGame')
+  async handleStartGame(
+    @UserToken() clientToken: string,
+    @MessageBody() payload
+  ) {
+    console.log('start payload', payload)
+    let user = await this.UsersService.findByToken(clientToken)
+
+    this.GameService.startGame(user, payload.game_id)
+  }
+
   @SubscribeMessage('gameList')
   async handleGameList(
     @UserToken() hosterToken: string
   ) {
-    // console.log('Отправляем игры', this.GameService.getGameListForSending(hosterToken))
     this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
   }
   
-  @SubscribeMessage('gameCreatedByUser')
+  @SubscribeMessage('gameManagenentData')
   async handleGameCreatedByUser(
     @ConnectedSocket() client: Socket,
     @UserToken() userToken: string
   ) {
-    client.emit('gameCreatedByUser', { games : this.GameService.getGamesCreatedByUser(userToken) })
-  }
-
-  @SubscribeMessage('gameJoinedByUser')
-  async handleGameJoinedByUser(
-    @ConnectedSocket() client: Socket,
-    @UserToken() userToken: string
-  ) {
-    client.emit('gameJoinedByUser', { games : this.GameService.getGamesJoinedByUser(userToken) })
+    let data = {
+      created_games : this.GameService.getGamesCreatedByUser(userToken),
+      joined_games : this.GameService.getGamesJoinedByUser(userToken),
+      spectrated_games : this.GameService.getGamesSpectratedByUser(userToken)
+    }
+    client.emit('gameManagenentData', data)
   }
 
   afterInit(server: Server) {
