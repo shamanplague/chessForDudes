@@ -15,18 +15,18 @@
         <span>{{ game.id }}</span>
         <span>{{ game.status }}</span>
         <span>{{ game.hoster }}</span>
+        <span>{{ game.myGame }}</span>
         <!-- <button @click="joinGame(game.id)" :disabled="game.myGame"> -->
         <button @click="joinGame(game.id, true)">
           Войти
         </button>
         <button @click="joinGame(game.id, false)">
           Наблюдать
+        </button><button @click="deleteGame(game.id)">
+          Отменить
         </button>
       </div>
     </div>
-
-    {{ user }}
-
   </div>
 </template>
 
@@ -76,8 +76,24 @@ export default {
   },
   watch : {
     gameList (v) {
-      this.newFilteredGameList = v
-      this.$socket.emit('gameCreatedByUser')
+      if (this.user.isAnonymous) {
+        this.newFilteredGameList = v
+        this.$socket.emit('gameCreatedByUser')
+      } else {
+        this.newFilteredGameList = v
+
+        this.filteredGameList = v
+        .map(item => {
+          console.log('item', item.players.includes(this.user.name))
+          if (item.players.includes(this.user.name)) {
+            item.myGame = true
+          } else {
+            item.myGame = false
+          }
+
+          return item
+        })
+      }
     },
     filteredGameList (v) {
       console.log('filteredGameList изменился', v)
@@ -102,10 +118,18 @@ export default {
       //   console.log('this.$store.state.games', this.$store.state.games)
       // }, 500)
     },
+    createGame () {
+      this.$socket.emit('createGame', {})
+    },
     joinGame (id, asPlayer) {
       this.$socket.emit('joinGame', {
         game_id: id,
         asPlayer
+      })
+    },
+    deleteGame (id) {
+      this.$socket.emit('deleteGame', {
+        game_id: id
       })
     },
     loginAsAnonymous () {
@@ -121,9 +145,6 @@ export default {
         password: 'garfield',
         isAnonymous: false
       })
-    },
-    createGame () {
-      this.$socket.emit('createGame', {})
     }
   }
 }

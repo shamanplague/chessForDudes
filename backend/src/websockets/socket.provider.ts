@@ -63,6 +63,30 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
     this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
   }
 
+  @SubscribeMessage('joinGame')
+  async handleJoinGameAsPlayer(
+    @UserToken() clientToken: string,
+    @MessageBody() payload
+  ) {
+    console.log('payload', payload)
+    let user = await this.UsersService.findByToken(clientToken)
+
+    this.GameService.joinGame(user, payload.game_id, payload.asPlayer)
+    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+  }
+
+  @SubscribeMessage('deleteGame')
+  async handleDeleteGame(
+    @UserToken() clientToken: string,
+    @MessageBody() payload
+  ) {
+    console.log('delete payload', payload)
+    let user = await this.UsersService.findByToken(clientToken)
+
+    this.GameService.deleteGame(user, payload.game_id)
+    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+  }
+
   @SubscribeMessage('gameList')
   async handleGameList(
     @UserToken() hosterToken: string
@@ -85,19 +109,6 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
     @UserToken() userToken: string
   ) {
     client.emit('gameJoinedByUser', { games : this.GameService.getGamesJoinedByUser(userToken) })
-  }
-
-  @SubscribeMessage('joinGame')
-  async handleJoinGameAsPlayer(
-    @UserToken() clientToken: string,
-    @MessageBody() payload
-  ) {
-    console.log('payload', payload)
-    let user = await this.UsersService.findByToken(clientToken)
-    console.log('тип', typeof payload.asPlayer)
-
-    this.GameService.joinGame(user, payload.game_id, payload.asPlayer)
-    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
   }
 
   afterInit(server: Server) {

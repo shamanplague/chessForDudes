@@ -51,7 +51,7 @@ export class GameService {
   //   return this
   // }
       
-  joinGame (user: User, gameId: number, asPlayer: boolean): Boolean { //// { game_id: number }
+  joinGame (user: User, gameId: number, asPlayer: boolean): void {
     console.log(`User ${user.getId()} want to join to game ${gameId}`)
     
     let neededGame = this.games.find(item => item.getId() === gameId)
@@ -64,10 +64,19 @@ export class GameService {
       } else {
         neededGame.addSpectrator(user)
       }
+    }
+  }
 
-      // console.log('Добавили юзера в игру', neededGame)
+  deleteGame(user: User, gameId: number): void {
+    let neededGame = this.games.find(item => item.getId() === gameId)
 
-      return true
+    if (neededGame.getHoster().getId() !== user.getId()) {
+      throw new WsException('You are not a hoster')
+    } else {
+      let index = this.games.indexOf(neededGame)
+      if (index !== -1) {
+        this.games.splice(index, 1)
+      }
     }
   }
 
