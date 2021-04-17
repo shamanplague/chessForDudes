@@ -1,11 +1,14 @@
 import { User } from '../users/user'
 
 export class Game {
-	nowPlaysUserId: number
-	isOver: boolean = false
-	// board: Board
 
-  constructor(
+  public static gameStatuses: any = {
+    PREPARING: 'PREPARING',
+    IN_PROGRESS: 'IN_PROGRESS',
+    FINISHED: 'FINISHED'
+  }
+
+	 constructor(
     private id: number,
     private status: string,
     private hoster: User,
@@ -18,6 +21,13 @@ export class Game {
   }
   getStatus () {
     return this.status
+  }
+  setStatus (status) {
+    if (!Game.gameStatuses.hasOwnProperty(status)) {
+      throw 'Недопустимый статус'
+    } else {
+      this.setStatus(status)
+    }
   }
   getHoster () {
     return this.hoster

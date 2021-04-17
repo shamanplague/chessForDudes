@@ -17,7 +17,6 @@ export const actions = {
     }
 
     commit('setUser', userState)
-    // console.log('on SOCKET_sendTokenFromServer method', data)
   },
   SOCKET_anonymousTokenFromServer ({commit}, data) {
     Vue.$cookies.set('userToken', data.token)
@@ -27,19 +26,16 @@ export const actions = {
     }
 
     commit('setUser', userState)
-    // console.log('on SOCKET_sendTokenFromServer method', data)
   },
   SOCKET_gameList ({ commit }, data) {
-
-    // console.log('data on refreshGameList', data)
-
-    // console.log('Vue.$socket', Vue.$socket)
-
     commit('refreshGameList', data.games)
   },
   
   SOCKET_gameManagenentData () {
 
+  },
+  SOCKET_startGame () {
+    
   },
   SOCKET_exception  ({ state, commit }, data) {
     data.id = state.backendErrors.length ?

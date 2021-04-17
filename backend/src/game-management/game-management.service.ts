@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { WsException } from '@nestjs/websockets'
+import { CheckersService } from 'src/play-modules/checkers/checkers.service'
 import { User } from 'src/users/user'
 import { UsersService } from '../users/users.service'
 import { Game } from './game'
@@ -7,18 +8,13 @@ import { Game } from './game'
 @Injectable()
 export class GameManagementService {
   constructor (
-    private UsersService: UsersService
+    private UsersService: UsersService,
+    private CheckersService: CheckersService
   ) {}
 
   private games: Array<Game> = [
     
   ]
-
-  private gameStatuses = {
-    PREPARING: 'PREPARING',
-    IN_PROGRESS: 'IN_PROGRESS',
-    FINISHED: 'FINISHED'
-  }
 
   async findById(id: number): Promise<Game> {
     return this.games.find(item => item.getId() === id)
@@ -30,7 +26,7 @@ export class GameManagementService {
 
     let game = new Game(
       this.nextGameIdGenerator.next().value,
-      this.gameStatuses.PREPARING,
+      Game.gameStatuses.PREPARING,
       hoster,
       [hoster],
       []
@@ -48,8 +44,11 @@ export class GameManagementService {
     }()
 
   startGame (user: User, gameId: number): void {
-    console.log('user', user)
-    console.log('gameId', gameId)
+    // console.log('user', user)
+    // console.log('gameId', gameId)
+    let startedGame = this.games.find(item => item.getId() === gameId)
+    this.games.splice(this.games.indexOf(startedGame), 1)
+    this.CheckersService.startGame(startedGame)
   }
       
   joinGame (user: User, gameId: number, asPlayer: boolean): void {

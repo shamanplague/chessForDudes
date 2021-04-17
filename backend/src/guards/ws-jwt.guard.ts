@@ -35,20 +35,19 @@ export class JwtGuard implements CanActivate {
 
     // console.log('token', token)
 
-    let verifyResult = await this.JwtService.verify(token)
+    try {
+      await this.JwtService.verify(token)
+    } catch (err) {
+      throw new WsException('Token expired')
+    }
 
-    let userExisting = await this.UsersService.findByToken(token)
+    let isUserExisting = Boolean(await this.UsersService.findByToken(token))
 
-    // console.log('verifyResult', verifyResult)
-    // console.log('userExisting', userExisting)
-
-    let res = Boolean(verifyResult) && Boolean(userExisting)
-
-    if (!res) {
+    if (!isUserExisting) {
       throw new WsException('Unautorized')
     }
 
-    return res
+    return isUserExisting
 
   }
 }

@@ -10,7 +10,7 @@ import { GameManagementService } from 'src/game-management/game-management.servi
 @WebSocketGateway()
 export class GameManagementGateway {
   constructor (
-    private GameService : GameManagementService,
+    private GameManagementService : GameManagementService,
     private UsersService : UsersService
   ) {}
 
@@ -21,8 +21,8 @@ export class GameManagementGateway {
   async handleCreateGame(
     @UserToken() hosterToken: string
   ) {
-    await this.GameService.createGame(hosterToken)    
-    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+    await this.GameManagementService.createGame(hosterToken)    
+    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('joinGame')
@@ -32,8 +32,8 @@ export class GameManagementGateway {
   ) {
     let user = await this.UsersService.findByToken(clientToken)
 
-    this.GameService.joinGame(user, payload.game_id, payload.asPlayer)
-    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+    this.GameManagementService.joinGame(user, payload.game_id, payload.asPlayer)
+    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('leaveGame')
@@ -43,8 +43,8 @@ export class GameManagementGateway {
   ) {
     let user = await this.UsersService.findByToken(clientToken)
 
-    this.GameService.leaveGame(user, payload.game_id, payload.isPlayer)
-    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+    this.GameManagementService.leaveGame(user, payload.game_id, payload.isPlayer)
+    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('deleteGame')
@@ -54,8 +54,8 @@ export class GameManagementGateway {
   ) {
     let user = await this.UsersService.findByToken(clientToken)
 
-    this.GameService.deleteGame(user, payload.game_id)
-    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+    this.GameManagementService.deleteGame(user, payload.game_id)
+    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('startGame')
@@ -66,14 +66,12 @@ export class GameManagementGateway {
     console.log('start payload', payload)
     let user = await this.UsersService.findByToken(clientToken)
 
-    this.GameService.startGame(user, payload.game_id)
+    this.GameManagementService.startGame(user, payload.game_id)
   }
 
   @SubscribeMessage('gameList')
-  async handleGameList(
-    @UserToken() hosterToken: string
-  ) {
-    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+  async handleGameList() {
+    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
   }
   
   @SubscribeMessage('gameManagenentData')
@@ -82,9 +80,9 @@ export class GameManagementGateway {
     @UserToken() userToken: string
   ) {
     let data = {
-      created_games : this.GameService.getGamesCreatedByUser(userToken),
-      joined_games : this.GameService.getGamesJoinedByUser(userToken),
-      spectrated_games : this.GameService.getGamesSpectratedByUser(userToken)
+      created_games : this.GameManagementService.getGamesCreatedByUser(userToken),
+      joined_games : this.GameManagementService.getGamesJoinedByUser(userToken),
+      spectrated_games : this.GameManagementService.getGamesSpectratedByUser(userToken)
     }
     client.emit('gameManagenentData', data)
   }
