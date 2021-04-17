@@ -1,4 +1,7 @@
 {
+  "ChessBoard": {
+    "description": "Auto imported from components/ChessBoard/ChessBoard.vue"
+  },
   "CreateGamePanel": {
     "description": "Auto imported from components/CreateGamePanel/CreateGamePanel.vue"
   },
@@ -7,5 +10,8 @@
   },
   "HeaderNav": {
     "description": "Auto imported from components/HeaderNav/HeaderNav.vue"
+  },
+  "PlayHeader": {
+    "description": "Auto imported from components/PlayHeader/PlayHeader.vue"
   }
 }

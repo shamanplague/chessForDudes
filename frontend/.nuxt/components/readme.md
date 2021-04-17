@@ -6,6 +6,8 @@ You can directly use them in pages and other components without the need to impo
 
 **Tip:** If a component is conditionally rendered with `v-if` and is big, it is better to use `Lazy` or `lazy-` prefix to lazy load.
 
+- `<ChessBoard>` | `<chess-board>` (components/ChessBoard/ChessBoard.vue)
 - `<CreateGamePanel>` | `<create-game-panel>` (components/CreateGamePanel/CreateGamePanel.vue)
 - `<GameCard>` | `<game-card>` (components/GameCard/GameCard.vue)
 - `<HeaderNav>` | `<header-nav>` (components/HeaderNav/HeaderNav.vue)
+- `<PlayHeader>` | `<play-header>` (components/PlayHeader/PlayHeader.vue)
