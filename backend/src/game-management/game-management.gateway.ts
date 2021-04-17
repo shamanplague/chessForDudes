@@ -1,58 +1,21 @@
-import {
-  SubscribeMessage,
-  WebSocketGateway,
-  OnGatewayInit,
-  WebSocketServer,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  MessageBody,
-  ConnectedSocket,
-  WsException,
-} from '@nestjs/websockets'
-import { Logger, UseGuards } from '@nestjs/common'
-import { Socket, Server } from 'socket.io'
-import { AnonymousUsersPipe } from './pipes/anonymous-users.pipe'
-import { LocalGuard } from './guards/ws-local.guard'
-import { JwtGuard } from './guards/ws-jwt.guard'
-import { JwtService } from '@nestjs/jwt'
-import { Public } from '../decorators/public.decorator'
-import { GameService } from '../game-management/game-management.service'
-import { User } from 'src/users/user'
+import { UseGuards } from '@nestjs/common'
+import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
+import { Server, Socket } from 'socket.io'
 import { UserToken } from 'src/decorators/user-token.decorator'
-import { UsersService } from '../users/users.service'
+import { JwtGuard } from 'src/guards/ws-jwt.guard'
+import { UsersService } from 'src/users/users.service'
+import { GameManagementService } from 'src/game-management/game-management.service'
 
 @UseGuards(JwtGuard)
 @WebSocketGateway()
-export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class GameManagementGateway {
   constructor (
-    private JwtService : JwtService,
-    private GameService : GameService,
+    private GameService : GameManagementService,
     private UsersService : UsersService
   ) {}
+
   @WebSocketServer() 
   private server: Server
-
-  private logger: Logger = new Logger('WebSocketGateway')
-
-  @Public()
-  @UseGuards(LocalGuard)
-  @SubscribeMessage('login')
-  handleLogin (
-    @ConnectedSocket() client: Socket,
-    @MessageBody(AnonymousUsersPipe) user
-  ): void
-  {
-    const payload = { username: user.username, sub: user.id }
-
-    let token = this.JwtService.sign(payload)
-    this.UsersService.assignToken(user.username, token)
-    if (user.isAnonymous) {
-      client.emit('anonymousTokenFromServer', { token })
-    } else {
-      client.emit('tokenFromServer', { token })
-    }
-    
-  }
 
   @SubscribeMessage('createGame')
   async handleCreateGame(
@@ -125,16 +88,5 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
     }
     client.emit('gameManagenentData', data)
   }
-
-  afterInit(server: Server) {
-    this.logger.log('Init');
-  }
-
-  handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
-  }
-
-  handleConnection(client: Socket, ...args: any[]) {
-    this.logger.log(`Client connected: ${client.id}`)
-  }
+  
 }

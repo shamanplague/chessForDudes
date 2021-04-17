@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service'
 import { Game } from './game'
 
 @Injectable()
-export class GameService {
+export class GameManagementService {
   constructor (
     private UsersService: UsersService
   ) {}

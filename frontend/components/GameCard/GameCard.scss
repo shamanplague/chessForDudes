@@ -5,7 +5,7 @@
     "id type hoster hoster"
     "players players players players"
     "spectrators spectrators spectrators buttons";
-  grid-template-columns: 40px 0.5fr 1fr 220px;
+  grid-template-columns: 20px minmax(120px, 1fr) 1fr 220px;
   grid-template-rows: 20px repeat(2, fit-content(30px));
   grid-gap: 5px;
   width: 100%;

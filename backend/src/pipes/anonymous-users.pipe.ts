@@ -1,6 +1,6 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common'
 import { MessageBody } from '@nestjs/websockets'
-import { UsersService } from '../../users/users.service'
+import { UsersService } from 'src/users/users.service'
 
 @Injectable()
 export class AnonymousUsersPipe implements PipeTransform {
