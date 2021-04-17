@@ -1,0 +1,45 @@
+.play-header {
+  height: 10vh;
+  width: 90vw;
+  margin: auto;
+  position: relative;
+  &__item {
+    height: inherit;
+    display: inline-block;
+    &.avatar-image {
+      img {
+        border-radius: 50%;
+        height: inherit;
+      }
+      &.right {
+        img {
+          transform: scale(-1, 1);
+        }
+      }
+    }
+    &.username{
+      padding: 0 5px;
+      font-size: 4vw;
+    }
+  }
+}
+
+.right {
+  float: right;
+}
+
+.left {
+  float: left;
+}
+
+.board-container {
+  max-height: 70vh;
+  max-width: 90vw;
+  margin: auto;
+  .board {
+    max-width: inherit;
+    max-height: inherit;
+    margin: inherit;
+    display: block;
+  }
+}

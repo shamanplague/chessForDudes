@@ -55,6 +55,9 @@ export const actions = {
   deleteBackendError ({ commit }, id) {
     commit('deleteBackendError', id)
   },
+  replaceUsername({ commit }, id) {
+    commit('deleteBackendError', id)
+  }
 }
 
 export const mutations = {
@@ -69,11 +72,19 @@ export const mutations = {
     let index = state.backendErrors.indexOf(neededError)
     if (index !== -1) {
       state.backendErrors.splice(index, 1)
-      console.log(`Удалили ошибку ${id}`)
+      // console.log(`Удалили ошибку ${id}`)
     }    
   },
   setUser (state, data) {
     state.user = data
-    console.log('Поставили', data)
+  },
+  replaceUsername({ games, user}, data) {
+
+    let neededGame = games.find(item => item.id === data.gameId)
+    let username = user.isAnonymous ? 'anonymous' : user.name
+    let index = neededGame[data.field].indexOf(username)
+
+    neededGame[data.field].splice(index, 1)
+    neededGame[data.field].unshift('self')
   }
 }

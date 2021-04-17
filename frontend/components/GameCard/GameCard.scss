@@ -1,0 +1,59 @@
+.game-item {
+  background-color: white;
+  display: grid;
+  grid-template-areas:
+    "id type hoster hoster"
+    "players players players players"
+    "spectrators spectrators spectrators buttons";
+  grid-template-columns: 40px 0.5fr 1fr 220px;
+  grid-template-rows: 20px repeat(2, fit-content(30px));
+  grid-gap: 5px;
+  width: 100%;
+  font-size: 14px;
+  padding: 15px;
+  border-radius: 10px;
+
+  &__line {
+    position: absolute;
+    padding-top: 15px;
+    background-color: #fdad54;
+    height: 20px;
+    width: 80vw;
+    margin-left: -15px;
+    opacity: 0.65;
+  }
+  &__id {
+    grid-area: id;
+    font-size: 12px;
+    z-index: 0;
+  }
+  &__type {
+    grid-area: type;
+    font-size: 12px;
+    z-index: 0;
+  }
+  &__hoster {
+    grid-area: hoster;
+    font-size: 12px;
+    z-index: 0;
+  }
+  &__players {
+    grid-area: players;
+  }
+  &__spectrators {
+    grid-area: spectrators;
+  }
+  &__buttons {
+    display: flex;
+    grid-area: buttons;
+    align-self: flex-end;
+  }
+  &__buttons button {
+    font-size: 12px;
+    width: 100%;
+  }
+  &__button-wrapper {
+    padding: 5px;
+    width: 50%;
+  }
+}

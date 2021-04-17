@@ -1,8 +1,16 @@
 [
   {
+    "name": "game-id",
+    "path": "/game/:id?",
+    "component": "C:\\\\chessfordudes\\\\frontend\\\\pages\\\\game\\\\_id.vue",
+    "chunkName": "pages/game/_id",
+    "_name": "_30f287b9"
+  },
+  {
     "name": "index",
     "path": "/",
     "component": "C:\\\\chessfordudes\\\\frontend\\\\pages\\\\index.vue",
-    "chunkName": "pages/index"
+    "chunkName": "pages/index",
+    "_name": "_f038c2fa"
   }
 ]

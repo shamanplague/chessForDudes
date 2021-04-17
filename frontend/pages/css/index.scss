@@ -1,0 +1,18 @@
+.game-list {
+  width: 80vw;
+  margin: auto;
+}
+
+.spinner-border {
+  &.text-primary {
+    color: #fdad54 !important;
+  }
+}
+
+.create-game-panel-wrapper {
+  margin: 10px 0;
+}
+
+.game-card-wrapper {
+  margin: 10px 0;
+}

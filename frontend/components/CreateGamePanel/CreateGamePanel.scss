@@ -1,0 +1,24 @@
+.create-game-panel {
+  background-color: white;
+  display: grid;
+  grid-template-columns: 90px 1fr 110px;
+  grid-template-rows: 30px;
+  grid-gap: 5px;
+  width: 90vw;
+  font-size: 14px;
+  padding: 15px;
+  border-radius: 10px;
+  margin: auto;
+  align-items: center;
+  &__button-wrapper {
+    width: 100%;
+    button {
+      width: inherit;
+    }
+  }
+}
+
+.custom-select-sm:focus {
+  box-shadow: none !important;
+  border-color: lighten(#fdad54, 10%) !important;
+}

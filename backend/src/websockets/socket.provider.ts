@@ -63,13 +63,24 @@ export class Gateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDis
   }
 
   @SubscribeMessage('joinGame')
-  async handleJoinGameAsPlayer(
+  async handleJoinGame(
     @UserToken() clientToken: string,
     @MessageBody() payload
   ) {
     let user = await this.UsersService.findByToken(clientToken)
 
     this.GameService.joinGame(user, payload.game_id, payload.asPlayer)
+    this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
+  }
+
+  @SubscribeMessage('leaveGame')
+  async handleLeaveGame(
+    @UserToken() clientToken: string,
+    @MessageBody() payload
+  ) {
+    let user = await this.UsersService.findByToken(clientToken)
+
+    this.GameService.leaveGame(user, payload.game_id, payload.isPlayer)
     this.server.emit('gameList', { games : this.GameService.getGameListForSending() })
   }
 

@@ -28,6 +28,12 @@ export class Game {
 	addSpectrator (user: User) {
     this.spectrators.push(user)
   }
+  deletePlayer (user: User) {
+    this.players = this.players.filter(item => item.getId() !== user.getId())
+  }
+	deleteSpectrator (user: User) {
+    this.spectrators = this.spectrators.filter(item => item.getId() !== user.getId())
+  }
   getPlayers () {
     return this.players
   }

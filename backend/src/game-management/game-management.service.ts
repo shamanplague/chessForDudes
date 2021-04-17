@@ -53,7 +53,6 @@ export class GameService {
   }
       
   joinGame (user: User, gameId: number, asPlayer: boolean): void {
-    // console.log(`User ${user.getId()} want to join to game ${gameId}`)
     
     let neededGame = this.games.find(item => item.getId() === gameId)
 
@@ -72,6 +71,26 @@ export class GameService {
         neededGame.addSpectrator(user)
       }
     }
+  }
+
+  leaveGame (user: User, gameId: number, isPlayer: boolean): void {
+    
+    let neededGame = this.games.find(item => item.getId() === gameId)
+
+    if (isPlayer) {
+      if (!neededGame.getPlayers().includes(user)) {
+        throw new WsException('You are not a player')
+      } else {
+        neededGame.deletePlayer(user)
+      }
+    } else {
+      if (!neededGame.getSpectrators().includes(user)) {
+        throw new WsException('You are not a spectrator')
+      } else {
+        neededGame.deleteSpectrator(user)
+      }
+    }
+      
   }
 
   deleteGame(user: User, gameId: number): void {
@@ -123,7 +142,9 @@ export class GameService {
 
     let spectrators = game
     .getSpectrators()
-    .map(item => item.getUsername())
+    .map(item => {
+      return item.isAnonymous() ? 'anonymous' : item.getUsername()
+    })
 
     return {
       id: game.getId(),

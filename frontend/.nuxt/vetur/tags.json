@@ -1,1 +1,11 @@
-{}
+{
+  "CreateGamePanel": {
+    "description": "Auto imported from components/CreateGamePanel/CreateGamePanel.vue"
+  },
+  "GameCard": {
+    "description": "Auto imported from components/GameCard/GameCard.vue"
+  },
+  "HeaderNav": {
+    "description": "Auto imported from components/HeaderNav/HeaderNav.vue"
+  }
+}

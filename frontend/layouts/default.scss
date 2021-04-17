@@ -1,0 +1,15 @@
+.warnings-wrapper {
+  position: fixed;
+  left: calc(50% - 47.5vw);
+  top: 10vh;
+  z-index: 999;
+}
+
+.warnings {
+  width: 95vw;
+  margin: auto;
+}
+
+.root {
+  width: 100vw;
+}

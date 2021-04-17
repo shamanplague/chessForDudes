@@ -1,53 +1,42 @@
 <template>
   <div>
-    <h1>Main page</h1>
-    <div class="buttons">
-      <button @click="getGameList()">
-        Получить список игр
-      </button>
-      <button @click="createGame()">
-        Создать игру
-      </button>
+
+    <div class="create-game-panel-wrapper">
+      <CreateGamePanel />
     </div>
 
-    <div class="lobby">
-      <div v-for="game in filteredGameList" :key="game.id">
-        <span>{{ game.id }}</span>
-        <span>{{ game.status }}</span>
-        <span>{{ game.hoster }}</span>
-        <button v-if="game.myGame" @click="deleteGame(game.id)">
-          Отменить
-        </button>
-        <button v-if="game.myGame" @click="startGame(game.id)">
-          Начать игру
-        </button>
-        <button v-if="!game.myGame && !game.forPlaying" @click="joinGame(game.id, true)">
-          Войти
-        </button>
-        <button v-if="!game.myGame && game.forPlaying" @click="exitGame(game.id, true)">
-          Выйти
-        </button>
-        <button v-if="!game.myGame && !game.forSpectrating" @click="joinGame(game.id, false)">
-          Наблюдать
-        </button>
-        <button v-if="!game.myGame && game.forSpectrating" @click="exitGame(game.id, false)">
-          Не наблюдать
-        </button>
-      </div>
+    <div v-if="filteredGameList.length" class="game-list">
+    
+    <GameCard 
+      class="mt-1 mb-2"
+      v-for="game in filteredGameList"
+      :key="game.id"
+      :game="game"
+    />
+
     </div>
+    <div v-else class="spinner-container vw-100 text-center pt-3">
+      <b-spinner variant="primary"></b-spinner>
+    </div>
+
   </div>
 </template>
 
 <script>
 
-import Vue from 'vue'
 import _ from 'lodash'
+import GameCard from '@/components/GameCard/GameCard'
+import CreateGamePanel from '@/components/CreateGamePanel/CreateGamePanel'
 
 export default {
   data () {
     return {
       filteredGameList: []
     }
+  },
+  components : {
+    GameCard,
+    CreateGamePanel
   },
   sockets : {
     connect () {
@@ -64,10 +53,13 @@ export default {
         this.$socket.disconnect()
         this.$socket.connect()
       }, 300)
+      setTimeout(() => {
+        this.getGameList()
+      }, 600)
     },
     gameManagenentData (v) {
       console.log('gameManagenentData', v)
-      this.filteredGameList = this.newFilteredGameList
+      this.filteredGameList = _.orderBy(this.newFilteredGameList
       .map(item => {
         if (v.created_games.includes(item.id)) {
           item.myGame = true
@@ -87,8 +79,16 @@ export default {
           item.forSpectrating = false
         }
 
+        if (item.forPlaying) {
+          this.$store.commit('replaceUsername', {gameId: item.id, field: 'players'})
+        }
+
+        if (item.forSpectrating) {
+          this.$store.commit('replaceUsername', {gameId: item.id, field: 'spectrators'})
+        }
+
         return item
-      })
+      }), 'id', 'desc')
     }
   },
   mounted() {
@@ -147,14 +147,6 @@ export default {
     }
   },
   methods : {
-    exitGame () {
-      console.log('Выходим из игры')
-    },
-    startGame (id) {
-      this.$socket.emit('startGame', {
-        game_id: id
-      })
-    },
     // deleteError (id) {
     //   this.$store.dispatch('deleteBackendError', id)
     // },
@@ -163,20 +155,6 @@ export default {
       // setTimeout(() => {
       //   console.log('this.$store.state.games', this.$store.state.games)
       // }, 500)
-    },
-    createGame () {
-      this.$socket.emit('createGame', {})
-    },
-    joinGame (id, asPlayer) {
-      this.$socket.emit('joinGame', {
-        game_id: id,
-        asPlayer
-      })
-    },
-    deleteGame (id) {
-      this.$socket.emit('deleteGame', {
-        game_id: id
-      })
     },
     loginAsAnonymous () {
       this.$socket.emit('login', {
@@ -196,6 +174,6 @@ export default {
 }
 </script>
 
-<style>
-
+<style lang='scss' scoped>
+  @import 'css/index.scss'
 </style>
