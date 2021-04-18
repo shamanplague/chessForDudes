@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { Game } from 'src/game-management/game'
 import { CheckersGame } from './checkers-game'
+import { CellCoordinates } from './classes/cell.coordinates'
+import { Checker } from './classes/checker'
+import Preset from 'src/play-modules/checkers/classes/preset'
 
 @Injectable()
 export class CheckersService {
@@ -8,7 +11,7 @@ export class CheckersService {
     
   ]
 
-  startGame (game: Game): void {
+  async startGame (game: Game): Promise<void> {
     let newGame = new CheckersGame(
       game.getId(),
       Game.gameStatuses.IN_PROGRESS,
@@ -18,8 +21,20 @@ export class CheckersService {
     )
 
     this.games.push(newGame)
-    console.log('Закидываем игру в активные')
+    await this.loadBoardPreset(newGame.getId(), Preset)
+    // console.log('Закидываем игру в активные')
 
-    console.log('палим стейт сервиса', this.games)
+    // console.log('палим стейт доски', newGame.getBoard())
   }
+
+  async findById(id: number): Promise<CheckersGame> {
+    return this.games.find(item => item.getId() === id)
+  }
+  
+  async loadBoardPreset (gameId: number, preset : Array<any>) {
+    let game = await this.findById(gameId)
+    preset.forEach(chunk => {
+      game.getBoard().getCellByCoordinates(chunk.coordinates).setChecker(chunk.checker)
+    })
+  } 
 }

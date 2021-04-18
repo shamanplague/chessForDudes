@@ -12,10 +12,10 @@ export class CellCoordinates {
     return this.letter
   }
   setLetter (letter: string): void {
-    if (!/^[a-h]$/.test(letter)) {
+    if (/^[a-h]$/.test(letter)) {
       this.letter = letter
     } else {
-      throw 'Недопустимый стороковый идентификатор клетки'
+      throw `Недопустимый стороковый идентификатор клетки: ${letter}`
     }
   }
   getNumber (): number {
@@ -23,9 +23,9 @@ export class CellCoordinates {
   }
   setNumber (number: number): void {
     if (number < 1 || number > 8) {
-      this.number = number
+      throw `Недопустимый числовой идентификатор клетки ${number}`
     } else {
-      throw 'Недопустимый стороковый идентификатор клетки'
+      this.number = number
     }
   }
   // метод сравнения объектов по телу
