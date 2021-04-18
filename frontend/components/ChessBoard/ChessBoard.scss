@@ -1,16 +1,22 @@
-.board-container {
-  max-height: 70vh;
-  max-width: 90vw;
+.grid-wrapper {
+  height: fit-content;
+  width: fit-content;
+  display: block;
+  position: relative;
   margin: auto;
   .board {
-    max-width: inherit;
-    max-height: inherit;
-    margin: inherit;
+    max-height: 70vh;
+    max-width: 90vw;
     display: block;
   }
   .board-grid {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
 }

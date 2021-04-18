@@ -31,21 +31,9 @@ export default {
   // },
   mounted () {
     this.gameId = this.$route.params.id
-    // console.log('Делаем анонимный токен')
-    // this.loginAsAnonymous()
   },
   methods : {
-    // startGame () {
-    //   console.log('Кидаем месседж на старт игры')
-    //   this.$socket.emit('startGame')
-    // },
-    // loginAsAnonymous () {
-    //   this.$socket.emit('login', {
-    //     username: 'anonymous',
-    //     password: 'anonymous',
-    //     isAnonymous: true
-    //   })
-    // }
+    
   }
 }
 

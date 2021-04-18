@@ -3,7 +3,7 @@ import { Game } from 'src/game-management/game'
 import { CheckersGame } from './checkers-game'
 import { CellCoordinates } from './classes/cell.coordinates'
 import { Checker } from './classes/checker'
-import Preset from 'src/play-modules/checkers/classes/preset'
+import CheckersPreset from 'src/play-modules/checkers/classes/data/checkers.preset'
 
 @Injectable()
 export class CheckersService {
@@ -21,7 +21,7 @@ export class CheckersService {
     )
 
     this.games.push(newGame)
-    await this.loadBoardPreset(newGame.getId(), Preset)
+    await this.loadBoardPreset(newGame.getId(), CheckersPreset)
     // console.log('Закидываем игру в активные')
 
     // console.log('палим стейт доски', newGame.getBoard())
@@ -31,7 +31,7 @@ export class CheckersService {
     return this.games.find(item => item.getId() === id)
   }
   
-  async loadBoardPreset (gameId: number, preset : Array<any>) {
+  async loadBoardPreset (gameId: number, preset: {checker: Checker, coordinates: CellCoordinates}[]) {
     let game = await this.findById(gameId)
     preset.forEach(chunk => {
       game.getBoard().getCellByCoordinates(chunk.coordinates).setChecker(chunk.checker)

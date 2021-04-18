@@ -5,7 +5,11 @@
       <CreateGamePanel />
     </div>
 
-    <div v-if="filteredGameList.length" class="game-list">
+    <div v-if="isGamesLoading" class="spinner-container vw-100 text-center pt-3">
+      <b-spinner variant="primary"></b-spinner>
+    </div>
+
+    <div v-else-if="filteredGameList.length" class="game-list">
     
     <GameCard 
       class="mt-1 mb-2"
@@ -16,7 +20,7 @@
 
     </div>
     <div v-else class="spinner-container vw-100 text-center pt-3">
-      <b-spinner variant="primary"></b-spinner>
+      <span>Пока не создано ни одной игры</span>
     </div>
 
   </div>
@@ -31,6 +35,7 @@ import CreateGamePanel from '@/components/CreateGamePanel/CreateGamePanel'
 export default {
   data () {
     return {
+      isGamesLoading: true,
       filteredGameList: []
     }
   },
@@ -102,6 +107,7 @@ export default {
   },
   watch : {
     gameList (v) {
+      this.isGamesLoading = false
       if (this.user.isAnonymous) {
         this.newFilteredGameList = v
         this.$socket.emit('gameManagenentData')
