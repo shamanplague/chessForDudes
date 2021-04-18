@@ -4,10 +4,12 @@
     <img class="board" src="/images/board.jpg">
     <div class="board-grid">
       <div v-for="cell in cells"
-          :key="cell"
+          :key="cell.label"
           class="cell"
           :id="cell.label"
-      ></div>
+      >
+      <div class="checker"></div>
+      </div>
     </div>
   </div>
 

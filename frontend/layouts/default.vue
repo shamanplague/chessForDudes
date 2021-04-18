@@ -4,6 +4,7 @@
     <div class="warnings-wrapper">
       <div class="warnings">
         <b-alert v-for="item in backendErrors" :key="item.id" show variant="danger">{{ item.message }}</b-alert>
+        <b-alert v-for="item in backendNotifications" :key="item.id" show variant="info">{{ item.message }}</b-alert>
       </div>
     </div>
     <Nuxt />
@@ -40,11 +41,17 @@ export default {
   watch : {
     backendErrors (v) {
       console.log('backendErrors изменился', v)
-    }
+    },
+    backendNotifications (v) {
+      console.log('backendErrors изменился', v)
+    },
   },
   computed: {
     backendErrors () {
       return this.$store.state.backendErrors
+    },
+    backendNotifications () {
+      return this.$store.state.backendNotifications
     }
   }
 }

@@ -4,6 +4,7 @@ export const state = () => ({
   user: [],
   games: [],
   backendErrors: [],
+  backendNotifications: []
 })
 
 export const actions = {
@@ -34,8 +35,22 @@ export const actions = {
   SOCKET_gameManagenentData () {
 
   },
-  SOCKET_startGame () {
+  SOCKET_startGame (store, data) {
+    console.log('Прикатила игра', data)
+  },
+  SOCKET_activeGames () {
     
+  },
+  SOCKET_notificationFromServer ({ state, commit }, data) {
+    data.id = state.backendErrors.length ?
+     state.backendErrors[state.backendErrors.length-1].id + 1
+     :
+     0
+    
+    commit('addBackendNotification', data)
+    setTimeout(() => {
+      commit('deleteBackendNotification', data.id)
+    }, 4000)
   },
   SOCKET_exception  ({ state, commit }, data) {
     data.id = state.backendErrors.length ?
@@ -68,7 +83,16 @@ export const mutations = {
     let index = state.backendErrors.indexOf(neededError)
     if (index !== -1) {
       state.backendErrors.splice(index, 1)
-      // console.log(`Удалили ошибку ${id}`)
+    }    
+  },
+  addBackendNotification (state, data) {
+    state.backendNotifications.push(data)
+  },
+  deleteBackendNotification (state, id) {
+    let neededNotification = state.backendNotifications.find(item => item.id === id)
+    let index = state.backendNotifications.indexOf(neededNotification)
+    if (index !== -1) {
+      state.backendNotifications.splice(index, 1)
     }    
   },
   setUser (state, data) {

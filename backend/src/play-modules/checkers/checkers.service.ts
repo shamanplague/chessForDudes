@@ -11,7 +11,7 @@ export class CheckersService {
     
   ]
 
-  async startGame (game: Game): Promise<void> {
+  async startGame (game: Game): Promise<CheckersGame> {
     let newGame = new CheckersGame(
       game.getId(),
       Game.gameStatuses.IN_PROGRESS,
@@ -25,6 +25,7 @@ export class CheckersService {
     // console.log('Закидываем игру в активные')
 
     // console.log('палим стейт доски', newGame.getBoard())
+    return this.findById(newGame.getId())
   }
 
   async findById(id: number): Promise<CheckersGame> {

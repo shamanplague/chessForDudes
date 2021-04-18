@@ -7,6 +7,7 @@ import { AnonymousUsersPipe } from 'src/pipes/anonymous-users.pipe'
 import { JwtService } from '@nestjs/jwt'
 import { UsersService } from 'src/users/users.service'
 import { JwtGuard } from 'src/guards/ws-jwt.guard'
+import ClientEvents from 'src/websockets/client.events'
 
 @UseGuards(JwtGuard)
 @WebSocketGateway()
@@ -30,9 +31,9 @@ export class UsersGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     let token = this.JwtService.sign(payload)
     this.UsersService.assignToken(user.username, token)
     if (user.isAnonymous) {
-      client.emit('anonymousTokenFromServer', { token })
+      client.emit(ClientEvents.ANONYMOUS_TOKEN_FROM_SERVER, { token })
     } else {
-      client.emit('tokenFromServer', { token })
+      client.emit(ClientEvents.TOKEN_FROM_SERVER, { token })
     }
     
   }

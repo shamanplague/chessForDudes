@@ -5,6 +5,7 @@ import { UserToken } from 'src/decorators/user-token.decorator'
 import { JwtGuard } from 'src/guards/ws-jwt.guard'
 import { UsersService } from 'src/users/users.service'
 import { GameManagementService } from 'src/game-management/game-management.service'
+import ClientsEvents from 'src/websockets/client.events'
 
 @UseGuards(JwtGuard)
 @WebSocketGateway()
@@ -22,7 +23,7 @@ export class GameManagementGateway {
     @UserToken() hosterToken: string
   ) {
     await this.GameManagementService.createGame(hosterToken)    
-    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
+    this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('joinGame')
@@ -33,7 +34,7 @@ export class GameManagementGateway {
     let user = await this.UsersService.findByToken(clientToken)
 
     this.GameManagementService.joinGame(user, payload.game_id, payload.asPlayer)
-    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
+    this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('leaveGame')
@@ -44,7 +45,7 @@ export class GameManagementGateway {
     let user = await this.UsersService.findByToken(clientToken)
 
     this.GameManagementService.leaveGame(user, payload.game_id, payload.isPlayer)
-    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
+    this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('deleteGame')
@@ -55,7 +56,7 @@ export class GameManagementGateway {
     let user = await this.UsersService.findByToken(clientToken)
 
     this.GameManagementService.deleteGame(user, payload.game_id)
-    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
+    this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
 
   @SubscribeMessage('startGame')
@@ -63,15 +64,18 @@ export class GameManagementGateway {
     @UserToken() clientToken: string,
     @MessageBody() payload
   ) {
-    console.log('start payload', payload)
+    // console.log('start payload', payload)
     let user = await this.UsersService.findByToken(clientToken)
 
-    this.GameManagementService.startGame(user, payload.game_id)
+    let game = await this.GameManagementService.startGame(user, payload.game_id)
+    this.server.emit(ClientsEvents.START_GAME, { new_game: game })
+    this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
+    this.server.emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Игра №${payload.game_id} начинается` })
   }
 
   @SubscribeMessage('gameList')
   async handleGameList() {
-    this.server.emit('gameList', { games : this.GameManagementService.getGameListForSending() })
+    this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
   
   @SubscribeMessage('gameManagenentData')
@@ -84,7 +88,7 @@ export class GameManagementGateway {
       joined_games : this.GameManagementService.getGamesJoinedByUser(userToken),
       spectrated_games : this.GameManagementService.getGamesSpectratedByUser(userToken)
     }
-    client.emit('gameManagenentData', data)
+    client.emit(ClientsEvents.GAME_MANAGEMENT_DATA, data)
   }
   
 }

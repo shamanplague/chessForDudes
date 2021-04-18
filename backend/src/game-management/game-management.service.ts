@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { WsException } from '@nestjs/websockets'
+import { CheckersGame } from 'src/play-modules/checkers/checkers-game'
 import { CheckersService } from 'src/play-modules/checkers/checkers.service'
 import { User } from 'src/users/user'
 import { UsersService } from '../users/users.service'
@@ -43,12 +44,12 @@ export class GameManagementService {
     }   
     }()
 
-  startGame (user: User, gameId: number): void {
+  async startGame (user: User, gameId: number): Promise<Game> {
     // console.log('user', user)
     // console.log('gameId', gameId)
     let startedGame = this.games.find(item => item.getId() === gameId)
     this.games.splice(this.games.indexOf(startedGame), 1)
-    this.CheckersService.startGame(startedGame)
+    return await this.CheckersService.startGame(startedGame)
   }
       
   joinGame (user: User, gameId: number, asPlayer: boolean): void {

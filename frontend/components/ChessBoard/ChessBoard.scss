@@ -4,6 +4,8 @@
   display: block;
   position: relative;
   margin: auto;
+  // переворот для второго игрока
+  // transform: rotate(180deg);
   .board {
     max-height: 70vh;
     max-width: 90vw;
@@ -18,5 +20,19 @@
     left: 0;
     right: 0;
     bottom: 0;
+  }
+}
+
+.checker {
+  background-color: black;
+  border: 2px solid #e9ecef;
+  margin: 10%;
+  display: block;
+  height: 80%;
+  width: 80%;
+  border-radius: 50%;
+  &.white {
+    background-color: #e9ecef;
+    border: 2px solid black;
   }
 }
