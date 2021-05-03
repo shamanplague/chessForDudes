@@ -8,10 +8,14 @@
           class="cell"
           :id="cell.label"
       >
-      <div class="checker"></div>
+      <div  v-if="cell.checker"
+            class="checker"
+            :class="{ 'white' : cell.checker.isWhite}"
+            ></div>
       </div>
     </div>
   </div>
+  
 
 </template>
 
@@ -26,6 +30,11 @@ export default {
     }
   },
   computed : {
+    boardState () {
+      if (!this.$store.state.activeGames.length) return []
+      // console.log('boardState', this.$store.state.activeGames[0].board)
+      return this.$store.state.activeGames[0].board
+    },
     cells () {
       let arr = []
 
@@ -53,8 +62,20 @@ export default {
 
       for (let i = 0; i < 64; i++) {
         // console.log('id', `${letterGen.next().value}${numberGen.next().value}`)
+        let object = 
         arr.push({id: i, label: `${letterGen.next().value}${numberGen.next().value}`})
       }
+
+      arr.map(cellItem => {
+
+        let statesCell = this.boardState.find(boardItem => boardItem.coordinate === cellItem.label)
+
+        if (statesCell && statesCell.hasOwnProperty('checker')) {
+          cellItem.checker = statesCell.checker
+        }
+
+        return cellItem
+      })
 
       return arr
     }

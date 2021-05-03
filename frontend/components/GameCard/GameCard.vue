@@ -24,16 +24,16 @@
             <button @click="deleteGame(game.id)" type="button" class="btn btn-sm">Отменить</button>
           </div>
           <div v-if="game.myGame" class="game-item__button-wrapper">
-            <button @click="startGame(game.id)" type="button" class="btn btn-sm">Начать</button>
+            <button @click="startGame(game.id)" type="button" class="btn btn-sm" :disabled="!gameStartAvailable">Начать</button>
           </div>
           <div v-if="!game.myGame && !game.forPlaying" class="game-item__button-wrapper">
-            <button @click="joinGame(game.id, true)" type="button" class="btn btn-sm">Войти</button>
+            <button @click="joinGame(game.id, true)" type="button" class="btn btn-sm" :disabled="!enterAsPlayerAvailable">Войти</button>
           </div>
           <div v-if="!game.myGame && game.forPlaying" class="game-item__button-wrapper">
             <button @click="exitGame(game.id, true)" type="button" class="btn btn-sm">Выйти</button>
           </div>
           <div v-if="!game.myGame && !game.forSpectrating" class="game-item__button-wrapper">
-            <button @click="joinGame(game.id, false)" type="button" class="btn btn-sm">Наблюдать</button>
+            <button @click="joinGame(game.id, false)" type="button" class="btn btn-sm" :disabled="!enterAsSpectratorAvailable">Наблюдать</button>
           </div>
           <div v-if="!game.myGame && game.forSpectrating" class="game-item__button-wrapper">
             <button @click="exitGame(game.id, false)" type="button" class="btn btn-sm">Не наблюдать</button>
@@ -57,6 +57,18 @@ export default {
   mounted () {
     console.log('game', this.game)
   },
+  computed: {
+    enterAsSpectratorAvailable () {
+      console.log('this.game.players', this.game.players)
+      return !this.game.players.includes('self')
+    },
+    enterAsPlayerAvailable () {
+      return this.game.players.length < 2 && !this.game.spectrators.includes('self')
+    },
+    gameStartAvailable () {
+      return this.game.players.length === 2
+    }
+  },
   methods: {
     defineUsername (username) {
       if (username === 'anonymous') {
@@ -78,7 +90,6 @@ export default {
       this.$socket.emit('startGame', {
         game_id: id
       })
-      this.$router.push({ path: `/game/${id}` })
     },
     joinGame (id, asPlayer) {
       this.$socket.emit('joinGame', {

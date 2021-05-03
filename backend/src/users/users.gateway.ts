@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt'
 import { UsersService } from 'src/users/users.service'
 import { JwtGuard } from 'src/guards/ws-jwt.guard'
 import ClientEvents from 'src/websockets/client.events'
+import { UserToken } from 'src/decorators/user-token.decorator'
 
 @UseGuards(JwtGuard)
 @WebSocketGateway()
@@ -30,6 +31,7 @@ export class UsersGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     let token = this.JwtService.sign(payload)
     this.UsersService.assignToken(user.username, token)
+    // console.log('Ставим токен', token)
     if (user.isAnonymous) {
       client.emit(ClientEvents.ANONYMOUS_TOKEN_FROM_SERVER, { token })
     } else {
@@ -46,7 +48,21 @@ export class UsersGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
-  handleConnection(client: Socket, ...args: any[]) {
+  async handleConnection(
+    @ConnectedSocket() client: Socket
+  ) {
+    let userToken = client.handshake.headers.cookie
+    .match(/(?<=userToken=).*?(?=(;|$))/)[0]
+
+    console.log('token', userToken)
+
+    let neededUser = await this.UsersService.findByToken(userToken)
+
+    if (neededUser) {
+      console.log('neededUser', neededUser)
+      neededUser.setSocketId(client.id)
+    }
+
     this.logger.log(`Client connected: ${client.id}`)
   }
 }

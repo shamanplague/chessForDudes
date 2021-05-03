@@ -12,9 +12,8 @@ body {
   background-color: #fdad54 !important;
 }
 
-.btn:hover,
-.btn:focus,
-.btn:visited{
+.btn:hover:not([disabled]),
+.btn:focus{
   box-shadow: none !important;
   background-color: lighten(#fdad54, 10%) !important;
 }

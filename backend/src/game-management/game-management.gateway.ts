@@ -67,7 +67,12 @@ export class GameManagementGateway {
     // console.log('start payload', payload)
     let user = await this.UsersService.findByToken(clientToken)
 
+    // let socketId = (await this.GameManagementService.findById(payload.game_id)).getPlayers()[0].getSocketId()
+    // let sockets = this.server.sockets.sockets
+    // sockets[socketId].emit(ClientsEvents.BACKGROUND_NOTIFICATION_FROM_SERVER, { message: 'YOUR_MOVE' })
+
     let game = await this.GameManagementService.startGame(user, payload.game_id)
+    console.log('formattedGame', game)
     this.server.emit(ClientsEvents.START_GAME, { new_game: game })
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
     this.server.emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Игра №${payload.game_id} начинается` })

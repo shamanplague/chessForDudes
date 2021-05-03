@@ -4,8 +4,6 @@
   display: block;
   position: relative;
   margin: auto;
-  // переворот для второго игрока
-  // transform: rotate(180deg);
   .board {
     max-height: 70vh;
     max-width: 90vw;
@@ -20,6 +18,10 @@
     left: 0;
     right: 0;
     bottom: 0;
+  }
+  &.black-side {
+    // переворот для второго игрока
+    transform: rotate(180deg);
   }
 }
 

@@ -47,11 +47,21 @@ export default {
     connect () {
       console.log('Соккеты подцепились')
     },
+    startGame (data) {
+      // console.log('для пуша', data)
+      this.$router.push({ path: `/game/${data.id}` })
+    },
+    backgroundNotificationFromServer (data) {
+      console.log('Упало фоновое с бэка', data)
+    },
     tokenFromServer () {
       setTimeout(() => {
         this.$socket.disconnect()
         this.$socket.connect()
       }, 300)
+      setTimeout(() => {
+        this.getGameList()
+      }, 600)
     },
     anonymousTokenFromServer () {
       setTimeout(() => {
@@ -98,9 +108,18 @@ export default {
   },
   mounted() {
     // let cookieToken = Vue.$cookies.get('userToken')
-    // if (!cookieToken) {
-      console.log('Делаем анонимный токен')
+    let roleToken = this.$cookies.get('role')
+
+    if (roleToken === 'garfield') {
+      this.loginAsGarfield()
+    } else if (roleToken === 'john') {
+      this.loginAsJohn()
+    } else {
       this.loginAsAnonymous()
+    }
+    // if (!cookieToken) {
+      // console.log('Делаем анонимный токен')
+      // this.loginAsAnonymous()
       // console.log('Заходим как Garfield')
       // this.loginAsGarfield()
     // }
@@ -163,6 +182,7 @@ export default {
       // }, 500)
     },
     loginAsAnonymous () {
+      console.log('Заходим как аноним')
       this.$socket.emit('login', {
         username: 'anonymous',
         password: 'anonymous',
@@ -170,9 +190,18 @@ export default {
       })
     },
     loginAsGarfield () {
+      console.log('Заходим как Гарфилд')
       this.$socket.emit('login', {
         username: 'garfield',
         password: 'garfield',
+        isAnonymous: false
+      })
+    },
+    loginAsJohn () {
+      console.log('Заходим как Джон')
+      this.$socket.emit('login', {
+        username: 'john',
+        password: 'john',
         isAnonymous: false
       })
     }

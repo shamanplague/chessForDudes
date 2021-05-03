@@ -11,6 +11,9 @@ export class Cell {
   hasChecker (): boolean {
     return !this.checker.isNull()
   }
+  getChecker (): Checker {
+    return this.checker
+  }
   setChecker (checker: Checker): void {
     if (this.hasChecker()) {
       throw 'Клетка занята'

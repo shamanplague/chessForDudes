@@ -46,6 +46,9 @@ export class Board {
     new Cell(new NullChecker, new CellCoordinates('h', 8)),
   ]
 
+  getCells (): Array<Cell> {
+    return this.cells
+  }
   setChecker(checker: Checker, coordinates: CellCoordinates): void {
     // console.log('Закидываем шашку', checker)
     this.getCellByCoordinates(coordinates).setChecker(checker)

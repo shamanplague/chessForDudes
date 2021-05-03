@@ -3,8 +3,10 @@ import Vue from 'vue'
 export const state = () => ({
   user: [],
   games: [],
+  activeGames: [],
   backendErrors: [],
-  backendNotifications: []
+  backendNotifications: [],
+  backgroundNotifications: []
 })
 
 export const actions = {
@@ -35,11 +37,12 @@ export const actions = {
   SOCKET_gameManagenentData () {
 
   },
-  SOCKET_startGame (store, data) {
-    console.log('Прикатила игра', data)
+  SOCKET_startGame ({ commit }, data) {
+    console.log('Прикатила игра', data.new_game)
+    commit('addActiveGame', data.new_game)
   },
-  SOCKET_activeGames () {
-    
+  SOCKET_activeGames ({ commit }, data) {
+    commit('refreshActiveGame', data.game)
   },
   SOCKET_notificationFromServer ({ state, commit }, data) {
     data.id = state.backendErrors.length ?
@@ -50,6 +53,17 @@ export const actions = {
     commit('addBackendNotification', data)
     setTimeout(() => {
       commit('deleteBackendNotification', data.id)
+    }, 4000)
+  },
+  SOCKET_backgroundNotificationFromServer ({ state, commit }, data) {
+    data.id = state.backgroundNotifications.length ?
+     state.backgroundNotifications[state.backgroundNotifications.length-1].id + 1
+     :
+     0
+    
+    commit('addBackgroundNotification', data)
+    setTimeout(() => {
+      commit('addBackgroundNotification', data.id)
     }, 4000)
   },
   SOCKET_exception  ({ state, commit }, data) {
@@ -72,6 +86,15 @@ export const actions = {
 }
 
 export const mutations = {
+  addActiveGame (state, data) {
+    state.activeGames.push(data)
+  },
+  refreshActiveGame (state, data) {
+    let neededGame = state.activeGames.find(item => item.id === data.id)
+    Object.keys(data).forEach(item => {
+      neededGame[item] = data[item]
+    })
+  },
   refreshGameList (state, data) {
     state.games = data
   },
@@ -93,6 +116,16 @@ export const mutations = {
     let index = state.backendNotifications.indexOf(neededNotification)
     if (index !== -1) {
       state.backendNotifications.splice(index, 1)
+    }    
+  },
+  addBackgroundNotification (state, data) {
+    state.backgroundNotifications.push(data)
+  },
+  addBackgroundNotification (state, id) {
+    let neededNotification = state.backgroundNotifications.find(item => item.id === id)
+    let index = state.backgroundNotifications.indexOf(neededNotification)
+    if (index !== -1) {
+      state.backgroundNotifications.splice(index, 1)
     }    
   },
   setUser (state, data) {

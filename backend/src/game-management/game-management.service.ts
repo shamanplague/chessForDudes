@@ -27,6 +27,7 @@ export class GameManagementService {
 
     let game = new Game(
       this.nextGameIdGenerator.next().value,
+      Game.gameTypes.CHECKERS,//прокидывать тип
       Game.gameStatuses.PREPARING,
       hoster,
       [hoster],
@@ -44,12 +45,17 @@ export class GameManagementService {
     }   
     }()
 
-  async startGame (user: User, gameId: number): Promise<Game> {
-    // console.log('user', user)
-    // console.log('gameId', gameId)
+  startGame (user: User, gameId: number): Object {
     let startedGame = this.games.find(item => item.getId() === gameId)
-    this.games.splice(this.games.indexOf(startedGame), 1)
-    return await this.CheckersService.startGame(startedGame)
+
+    if (startedGame.getType() === Game.gameTypes.CHECKERS) {
+      if (startedGame.getPlayers().length !== 2) {
+        throw new WsException('Game must include two players')
+      }
+      
+      this.games.splice(this.games.indexOf(startedGame), 1)
+      return this.CheckersService.startGame(startedGame)
+    }
   }
       
   joinGame (user: User, gameId: number, asPlayer: boolean): void {
