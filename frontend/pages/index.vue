@@ -31,6 +31,7 @@
 import _ from 'lodash'
 import GameCard from '@/components/GameCard/GameCard'
 import CreateGamePanel from '@/components/CreateGamePanel/CreateGamePanel'
+import ServerEvents from '@/websockets/server-events'
 
 export default {
   data () {
@@ -45,11 +46,11 @@ export default {
   },
   sockets : {
     connect () {
-      console.log('Соккеты подцепились')
+      console.log('Соккеты подцепились', ServerEvents)
     },
     startGame (data) {
-      // console.log('для пуша', data)
-      this.$router.push({ path: `/game/${data.id}` })
+      console.log('для пуша', data)
+      this.$router.push({ path: `/game/${data.new_game.gameId}` })
     },
     backgroundNotificationFromServer (data) {
       console.log('Упало фоновое с бэка', data)
@@ -73,26 +74,12 @@ export default {
       }, 600)
     },
     gameManagenentData (v) {
-      console.log('gameManagenentData', v)
+      // console.log('gameManagenentData', v)
       this.filteredGameList = _.orderBy(this.newFilteredGameList
       .map(item => {
-        if (v.created_games.includes(item.id)) {
-          item.myGame = true
-        } else {
-          item.myGame = false
-        }
-
-        if (v.joined_games.includes(item.id)) {
-          item.forPlaying = true
-        } else {
-          item.forPlaying = false
-        }
-
-        if (v.spectrated_games.includes(item.id)) {
-          item.forSpectrating = true
-        } else {
-          item.forSpectrating = false
-        }
+        item.myGame = v.created_games.includes(item.id)
+        item.forPlaying = v.joined_games.includes(item.id)
+        item.forSpectrating = v.spectrated_games.includes(item.id)
 
         if (item.forPlaying) {
           this.$store.commit('replaceUsername', {gameId: item.id, field: 'players'})
@@ -129,37 +116,31 @@ export default {
       this.isGamesLoading = false
       if (this.user.isAnonymous) {
         this.newFilteredGameList = v
-        this.$socket.emit('gameManagenentData')
+        this.$socket.emit(ServerEvents.GAME_MANAGEMENT_DATA)
       } else {
         this.newFilteredGameList = v
 
-        this.filteredGameList = v
+        this.filteredGameList = _.orderBy(v
         .map(item => {
-          console.log('item', item.players.includes(this.user.name))
-          if (item.hoster === this.user.name) {
-            item.myGame = true
-          } else {
-            item.myGame = false
+          
+          item.myGame = item.hoster === this.user.name
+          item.forPlaying = item.players.includes(this.user.name)
+          item.forSpectrating = item.spectrators.includes(this.user.name)
+
+          if (item.forPlaying) {
+            this.$store.commit('replaceUsername', {gameId: item.id, field: 'players'})
           }
 
-          if (item.players.includes(this.user.name)) {
-            item.forPlaying = true
-          } else {
-            item.forPlaying = false
-          }
-
-          if (item.spectrators.includes(this.user.name)) {
-            item.forSpectrating = true
-          } else {
-            item.forSpectrating = false
+          if (item.forSpectrating) {
+            this.$store.commit('replaceUsername', {gameId: item.id, field: 'spectrators'})
           }
 
           return item
-        })
+        }), 'id', 'desc')
       }
     },
     filteredGameList (v) {
-      console.log('filteredGameList изменился', v)
+      // console.log('filteredGameList изменился', v)
     }
   },
   computed : {
@@ -167,7 +148,7 @@ export default {
       return this.$store.state.games
     },
     user () {
-      console.log('this.$store.state.user', this.$store.state.user)
+      // console.log('this.$store.state.user', this.$store.state.user)
       return this.$store.state.user
     }
   },
@@ -176,14 +157,14 @@ export default {
     //   this.$store.dispatch('deleteBackendError', id)
     // },
     getGameList () {
-      this.$socket.emit('gameList')
+      this.$socket.emit(ServerEvents.GAME_LIST)
       // setTimeout(() => {
       //   console.log('this.$store.state.games', this.$store.state.games)
       // }, 500)
     },
     loginAsAnonymous () {
       console.log('Заходим как аноним')
-      this.$socket.emit('login', {
+      this.$socket.emit(ServerEvents.LOGIN, {
         username: 'anonymous',
         password: 'anonymous',
         isAnonymous: true
@@ -191,7 +172,7 @@ export default {
     },
     loginAsGarfield () {
       console.log('Заходим как Гарфилд')
-      this.$socket.emit('login', {
+      this.$socket.emit(ServerEvents.LOGIN, {
         username: 'garfield',
         password: 'garfield',
         isAnonymous: false
@@ -199,7 +180,7 @@ export default {
     },
     loginAsJohn () {
       console.log('Заходим как Джон')
-      this.$socket.emit('login', {
+      this.$socket.emit(ServerEvents.LOGIN, {
         username: 'john',
         password: 'john',
         isAnonymous: false

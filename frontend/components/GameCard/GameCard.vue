@@ -46,6 +46,7 @@
 <script>
 
 import _ from 'lodash'
+import ServerEvents from '@/websockets/server-events'
 
 export default {
   data () {
@@ -59,11 +60,10 @@ export default {
   },
   computed: {
     enterAsSpectratorAvailable () {
-      console.log('this.game.players', this.game.players)
-      return !this.game.players.includes('self')
+      return !this.game.forPlaying
     },
     enterAsPlayerAvailable () {
-      return this.game.players.length < 2 && !this.game.spectrators.includes('self')
+      return this.game.players.length < 2 && !this.game.forSpectrating
     },
     gameStartAvailable () {
       return this.game.players.length === 2
@@ -81,24 +81,24 @@ export default {
     },
     exitGame (id, isPlayer) {
       console.log('Выходим из игры')
-      this.$socket.emit('leaveGame', {
+      this.$socket.emit(ServerEvents.LEAVE_GAME, {
         game_id: id,
         isPlayer
       })
     },
     startGame (id) {
-      this.$socket.emit('startGame', {
+      this.$socket.emit(ServerEvents.START_GAME, {
         game_id: id
       })
     },
     joinGame (id, asPlayer) {
-      this.$socket.emit('joinGame', {
+      this.$socket.emit(ServerEvents.JOIN_GAME, {
         game_id: id,
         asPlayer
       })
     },
     deleteGame (id) {
-      this.$socket.emit('deleteGame', {
+      this.$socket.emit(ServerEvents.DELETE_GAME, {
         game_id: id
       })
     }

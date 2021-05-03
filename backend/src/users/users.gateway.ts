@@ -54,12 +54,12 @@ export class UsersGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     let userToken = client.handshake.headers.cookie
     .match(/(?<=userToken=).*?(?=(;|$))/)[0]
 
-    console.log('token', userToken)
+    // console.log('token', userToken)
 
     let neededUser = await this.UsersService.findByToken(userToken)
 
     if (neededUser) {
-      console.log('neededUser', neededUser)
+      // console.log('neededUser', neededUser)
       neededUser.setSocketId(client.id)
     }
 

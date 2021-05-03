@@ -18,6 +18,16 @@
     left: 0;
     right: 0;
     bottom: 0;
+    .cell {
+      &.selected {
+        outline: 2px solid #61c778;
+      }
+      &.available {
+        outline: 1px solid #61c778;
+        background-color: #61c778;
+        opacity: 0.5;
+      }
+    }
   }
   &.black-side {
     // переворот для второго игрока

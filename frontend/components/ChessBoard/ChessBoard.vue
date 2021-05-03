@@ -6,11 +6,14 @@
       <div v-for="cell in cells"
           :key="cell.label"
           class="cell"
+          :class="{ 'selected' : cell.label === selectedCheckerCoordinate}"
           :id="cell.label"
+          @click="makeMove(cell.label)"
       >
       <div  v-if="cell.checker"
             class="checker"
             :class="{ 'white' : cell.checker.isWhite}"
+            @click.stop="chooseChecker(cell.label)"
             ></div>
       </div>
     </div>
@@ -22,11 +25,17 @@
 <script>
 
 import _ from 'lodash'
+import ServerEvents from '@/websockets/server-events'
 
 export default {
   data () {
     return {
-      
+      selectedCheckerCoordinate: null
+    }
+  },
+  watch : {
+    selectedCheckerCoordinate (v) {
+      console.log('selectedCheckerCoordinate', v)
     }
   },
   computed : {
@@ -61,8 +70,6 @@ export default {
       })()
 
       for (let i = 0; i < 64; i++) {
-        // console.log('id', `${letterGen.next().value}${numberGen.next().value}`)
-        let object = 
         arr.push({id: i, label: `${letterGen.next().value}${numberGen.next().value}`})
       }
 
@@ -81,7 +88,15 @@ export default {
     }
   },
   methods : {
-    
+    chooseChecker (coordinate) {
+      this.selectedCheckerCoordinate = coordinate
+    },
+    makeMove (id) {
+      console.log('makeMove method')
+      this.$socket.emit(ServerEvents.MAKE_MOVE, {
+        coordinate: id
+      })
+    }
   }
 }
 
