@@ -92,10 +92,10 @@ export default {
       this.selectedCheckerCoordinate = coordinate
     },
     makeMove (id) {
-      console.log('makeMove method')
-      this.$socket.emit(ServerEvents.MAKE_MOVE, {
-        coordinate: id
-      })
+      this.$emit('makeMove', {
+          from: this.selectedCheckerCoordinate,
+          to: id
+        }) 
     }
   }
 }

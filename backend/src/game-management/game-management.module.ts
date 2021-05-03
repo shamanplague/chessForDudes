@@ -8,6 +8,7 @@ import { GameManagementService } from './game-management.service'
   imports: [ UsersModule ],
   providers: [GameManagementGateway,
               GameManagementService,
-              CheckersService]
+              CheckersService],
+  exports: [ CheckersService ]
 })
 export class GameManagementModule {}

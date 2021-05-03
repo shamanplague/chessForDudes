@@ -6,7 +6,7 @@
     </div>
 
     <div class="board-wrapper">
-      <Board />
+      <Board @makeMove="makeMove($event)" />
     </div>
 
   </div>
@@ -16,6 +16,8 @@
 
 import PlayHeader from '@/components/PlayHeader/PlayHeader'
 import Board from '@/components/ChessBoard/ChessBoard'
+import ServerEvents from '@/websockets/server-events'
+
 export default {
   data () {
     return {
@@ -26,14 +28,16 @@ export default {
     PlayHeader,
     Board
   },
-  // sockets : {
-
-  // },
   mounted () {
     this.gameId = this.$route.params.id
   },
   methods : {
-    
+    makeMove (coordinates) {
+      this.$socket.emit(ServerEvents.MAKE_MOVE, {
+        gameId: this.gameId,
+        coordinates
+      })
+    }
   }
 }
 

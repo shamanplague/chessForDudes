@@ -28,12 +28,16 @@ export class CheckersService {
     )
 
     this.games.push(newGame)
+    console.log('Закинули игру', this.games)
     await this.loadBoardPreset(newGame.getId(), CheckersPreset)
-    return this.formatGameForSend(await this.findById(newGame.getId()))
+    let gameForSend = await this.formatGameForSend(newGame.getId())
+    return gameForSend
   }
 
   async findById(id: number): Promise<CheckersGame> {
-    return this.games.find(item => item.getId() === id)
+    console.log('games', this.games)
+    console.log('id', id)
+    return this.games.find(item => +item.getId() === +id)
   }
   
   async loadBoardPreset (gameId: number, preset: {checker: Checker, coordinates: CellCoordinates}[]) {
@@ -43,8 +47,12 @@ export class CheckersService {
     })
   }
 
-  formatGameForSend (game: CheckersGame): Object {
+  async formatGameForSend (gameId: number): Promise<Object> {
     let object: any = {}
+
+    // console.log('приехало gameId', gameId)
+
+    let game = await this.findById(gameId)
 
     object.gameId = game.getId()
     object.players = game.getPlayers().map(item => {
@@ -69,5 +77,31 @@ export class CheckersService {
     console.log('Скрутили игру', object)
 
     return object
+  }
+
+  async makeMove (move: {gameId: number, coordinates: {from: string, to: string}}) {
+    console.log('move', move)
+    let fromLabel = move.coordinates.from.match(/[a-h]/)[0]
+    let fromNumber = +move.coordinates.from.match(/[1-8]/)[0]
+    let toLabel = move.coordinates.to.match(/[a-h]/)[0]
+    let toNumber = +move.coordinates.to.match(/[1-8]/)[0]
+
+    let fromCoordinate = new CellCoordinates(fromLabel, fromNumber)
+    let toCoordinate = new CellCoordinates(toLabel, toNumber)
+
+    let neededGame = await this.findById(move.gameId)
+
+    this.moveChecker(neededGame, fromCoordinate, toCoordinate)
+
+    
+
+    // console.log('fromCoordinate', fromCoordinate)
+    // console.log('toCoordinate', toCoordinate)
+  }
+
+  private async moveChecker (game: CheckersGame, fromCoordinate: CellCoordinates, toCoordinate: CellCoordinates) {
+    let checker = game.getBoard().getCellByCoordinates(fromCoordinate).getChecker()
+    game.getBoard().getCellByCoordinates(toCoordinate).setChecker(checker)
+    game.getBoard().getCellByCoordinates(fromCoordinate).removeChecker()
   }
 }

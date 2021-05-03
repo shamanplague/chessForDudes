@@ -8,4 +8,5 @@ export default {
   BACKGROUND_NOTIFICATION_FROM_SERVER: 'backgroundNotificationFromServer',
   START_GAME: 'startGame',
   PLAYERS_CURRENT_GAMES: 'playersCurrentGames',
+  ACTIVE_GAMES: 'activeGames'
 }
