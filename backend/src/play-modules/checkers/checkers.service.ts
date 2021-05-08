@@ -5,6 +5,9 @@ import { CellCoordinates } from './classes/cell.coordinates'
 import { Checker } from './classes/checker'
 import CheckersPreset from 'src/play-modules/checkers/classes/data/checkers.preset'
 import { CheckersPlayer } from './classes/checkers-player'
+import { Step } from './classes/step'
+import { WsException } from '@nestjs/websockets'
+import { UsersService } from 'src/users/users.service'
 
 @Injectable()
 export class CheckersService {
@@ -12,9 +15,13 @@ export class CheckersService {
     
   ]
 
-  async startGame (game: Game): Promise<Object> {
+  constructor (
+    private UsersService: UsersService
+  ){}
+
+  async startGame (game: Game): Promise<CheckersGame> {
     let newCheckersPlayers = game.getPlayers().map(item => {
-      return new CheckersPlayer(item, game.getPlayers().indexOf(item) === 0)
+      return new CheckersPlayer(item, game.getHoster().getId() === item.getId())
     })
 
     console.log('newCheckersPlayers', newCheckersPlayers)
@@ -28,15 +35,14 @@ export class CheckersService {
     )
 
     this.games.push(newGame)
-    console.log('Закинули игру', this.games)
+    // console.log('Закинули игру', this.games)
     await this.loadBoardPreset(newGame.getId(), CheckersPreset)
-    let gameForSend = await this.formatGameForSend(newGame.getId())
-    return gameForSend
+    return newGame
   }
 
   async findById(id: number): Promise<CheckersGame> {
-    console.log('games', this.games)
-    console.log('id', id)
+    // console.log('games', this.games)
+    // console.log('id', id)
     return this.games.find(item => +item.getId() === +id)
   }
   
@@ -45,6 +51,17 @@ export class CheckersService {
     preset.forEach(chunk => {
       game.getBoard().getCellByCoordinates(chunk.coordinates).setChecker(chunk.checker)
     })
+  }
+
+  async defineColor (userToken: string, gameId: number) {
+    let user = await this.UsersService.findByToken(userToken)
+    let game = await this.findById(gameId)
+
+    //проверить, не левый ли хуй стучится
+
+    return game.getPlayers()
+    .find(item => item.getId() === user.getId())
+    .isCheckersColorWhite() ? 'white' : 'black'
   }
 
   async formatGameForSend (gameId: number): Promise<Object> {
@@ -58,7 +75,7 @@ export class CheckersService {
     object.players = game.getPlayers().map(item => {
       return {
         name: item.isAnonymous() ? 'anonymous' : item.getUsername(),
-        color: item.getId() === game.getHoster().getId() ? 'white' : 'black'
+        color: item.isCheckersColorWhite() ? 'white' : 'black'
       }
     })
     object.isNowWhiteMove = game.isNowWhiteMove()
@@ -74,13 +91,13 @@ export class CheckersService {
       return res
     })
 
-    console.log('Скрутили игру', object)
+    // console.log('Скрутили игру', object)
 
     return object
   }
 
-  async makeMove (move: {gameId: number, coordinates: {from: string, to: string}}) {
-    console.log('move', move)
+  async makeMove (userId: number, move: {gameId: number, coordinates: {from: string, to: string}}) {
+    // console.log('move', move)
     let fromLabel = move.coordinates.from.match(/[a-h]/)[0]
     let fromNumber = +move.coordinates.from.match(/[1-8]/)[0]
     let toLabel = move.coordinates.to.match(/[a-h]/)[0]
@@ -89,19 +106,27 @@ export class CheckersService {
     let fromCoordinate = new CellCoordinates(fromLabel, fromNumber)
     let toCoordinate = new CellCoordinates(toLabel, toNumber)
 
-    let neededGame = await this.findById(move.gameId)
+    let game = await this.findById(move.gameId)
 
-    this.moveChecker(neededGame, fromCoordinate, toCoordinate)
+    let player = game.getCheckersPlayerById(userId)
 
-    
+    if (player.isCheckersColorWhite() !== game.isNowWhiteMove()) {
+      throw new WsException('Is not your move')
+    }
+
+    let step = new Step(move.gameId, fromCoordinate, toCoordinate)
+
+    this.moveChecker(game, step)
+
+    game.passMove()
 
     // console.log('fromCoordinate', fromCoordinate)
     // console.log('toCoordinate', toCoordinate)
   }
 
-  private async moveChecker (game: CheckersGame, fromCoordinate: CellCoordinates, toCoordinate: CellCoordinates) {
-    let checker = game.getBoard().getCellByCoordinates(fromCoordinate).getChecker()
-    game.getBoard().getCellByCoordinates(toCoordinate).setChecker(checker)
-    game.getBoard().getCellByCoordinates(fromCoordinate).removeChecker()
+  private async moveChecker (game: CheckersGame, step: Step) {
+    let checker = game.getBoard().getCellByCoordinates(step.getStartCell()).getChecker()
+    game.getBoard().getCellByCoordinates(step.getTargetCell()).setChecker(checker)
+    game.getBoard().getCellByCoordinates(step.getStartCell()).removeChecker()
   }
 }

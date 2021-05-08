@@ -3,9 +3,22 @@
   width: 90vw;
   margin: auto;
   position: relative;
+  display: flex;
+  justify-content: space-between;
   &__item {
     height: inherit;
     display: inline-block;
+    &.move-info {
+      display: flex;
+      flex-direction: column;
+      height: 50%;
+    }
+    &.text {
+      font-size: 1em;
+    }
+    &.timer {
+      font-size: 2em;
+    }
     &.avatar-image {
       img {
         border-radius: 50%;

@@ -7,6 +7,7 @@ export class CheckersGame extends Game {
 
 	private board: Board
   private _isNowWhiteMove: boolean = true
+  private checkersPlayers: Array<CheckersPlayer>
 
 	constructor (
     id: number,
@@ -17,10 +18,17 @@ export class CheckersGame extends Game {
 	){
     super(id, Game.gameTypes.CHECKERS, status, hoster, players, spectrators)
     this.board = new Board()
+    this.checkersPlayers = players
   }
 
   getBoard (): Board {
     return this.board
+  }
+  getPlayers (): Array<CheckersPlayer> {
+    return this.checkersPlayers
+  }
+  getCheckersPlayerById (id: number) {
+    return this.checkersPlayers.find(item => item.getId() === id)
   }
   isNowWhiteMove () {
     return this._isNowWhiteMove

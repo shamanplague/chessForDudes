@@ -66,6 +66,9 @@ export const actions = {
       commit('addBackgroundNotification', data.id)
     }, 4000)
   },
+  SOCKET_defineColor ({ state, commit }, data) {
+    console.log(data)
+  },
   SOCKET_exception  ({ state, commit }, data) {
     data.id = state.backendErrors.length ?
      state.backendErrors[state.backendErrors.length-1].id + 1

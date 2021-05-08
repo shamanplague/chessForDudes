@@ -2,12 +2,16 @@
   <div>
 
     <div class="play-header-wrapper mt-3 mb-3">
-      <PlayHeader />
+      <PlayHeader :isMyMove.sync="isMyMove"/>
     </div>
 
     <div class="board-wrapper">
-      <Board @makeMove="makeMove($event)" />
+      <Board  :boardState.sync="boardState"
+              @makeMove="makeMove($event)" 
+      />
     </div>
+
+    {{ activeGame }}
 
   </div>
 </template>
@@ -30,6 +34,22 @@ export default {
   },
   mounted () {
     this.gameId = this.$route.params.id
+  },
+  computed : {
+    activeGame () {
+      this.$socket.emit(ServerEvents.DEFINE_COLOR, {
+        gameId: this.gameId       
+      })
+      return this.$store.state.activeGames[0]
+    },
+    isMyMove () {
+      
+    },
+    boardState () {
+      if (!this.$store.state.activeGames.length) return []
+      // console.log('boardState', this.$store.state.activeGames[0].board)
+      return this.$store.state.activeGames[0].board
+    },
   },
   methods : {
     makeMove (coordinates) {

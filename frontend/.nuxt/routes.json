@@ -3,14 +3,12 @@
     "name": "game-id",
     "path": "/game/:id?",
     "component": "C:\\\\chessfordudes\\\\frontend\\\\pages\\\\game\\\\_id.vue",
-    "chunkName": "pages/game/_id",
-    "_name": "_30f287b9"
+    "chunkName": "pages/game/_id"
   },
   {
     "name": "index",
     "path": "/",
     "component": "C:\\\\chessfordudes\\\\frontend\\\\pages\\\\index.vue",
-    "chunkName": "pages/index",
-    "_name": "_f038c2fa"
+    "chunkName": "pages/index"
   }
 ]

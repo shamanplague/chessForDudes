@@ -6,5 +6,6 @@ export default {
   LEAVE_GAME: 'leaveGame',
   JOIN_GAME: 'joinGame',
   DELETE_GAME: 'deleteGame',
-  MAKE_MOVE: 'makeMove'
+  MAKE_MOVE: 'makeMove',
+  DEFINE_COLOR: 'defineColor'
 }

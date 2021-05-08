@@ -38,6 +38,22 @@ export class UsersService {
       ),
       new User (
         this.nextUserIdGenerator.next().value,
+        'liz',
+        'liz',
+        '',
+        '',
+        false
+      ),
+      new User (
+        this.nextUserIdGenerator.next().value,
+        'odie',
+        'odie',
+        '',
+        '',
+        false
+      ),
+      new User (
+        this.nextUserIdGenerator.next().value,
         'anonymous',
         'anonymous',
         '',

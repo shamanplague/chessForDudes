@@ -25,9 +25,9 @@
 <script>
 
 import _ from 'lodash'
-import ServerEvents from '@/websockets/server-events'
 
 export default {
+  props: ['boardState'],
   data () {
     return {
       selectedCheckerCoordinate: null
@@ -39,12 +39,9 @@ export default {
     }
   },
   computed : {
-    boardState () {
-      if (!this.$store.state.activeGames.length) return []
-      // console.log('boardState', this.$store.state.activeGames[0].board)
-      return this.$store.state.activeGames[0].board
-    },
     cells () {
+      // if (!this.boardState) return []
+
       let arr = []
 
       let letterGen = (function* func () {

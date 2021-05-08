@@ -91,16 +91,25 @@ export default {
 
         return item
       }), 'id', 'desc')
+    },
+    activeGames () {
+      
     }
   },
   mounted() {
     // let cookieToken = Vue.$cookies.get('userToken')
     let roleToken = this.$cookies.get('role')
 
+    console.log('roleToken', roleToken)
+
     if (roleToken === 'garfield') {
       this.loginAsGarfield()
     } else if (roleToken === 'john') {
       this.loginAsJohn()
+    } else if (roleToken === 'liz') {
+      this.loginAsLiz()
+    } else if (roleToken === 'odie') {
+      this.loginAsOdie()
     } else {
       this.loginAsAnonymous()
     }
@@ -153,6 +162,11 @@ export default {
     }
   },
   methods : {
+    defineColor () {// корректно запрашивать для каждой игры
+      this.$socket.emit(ServerEvents.DEFINE_COLOR, {
+        gameId: this.gameId       
+      })
+    },
     // deleteError (id) {
     //   this.$store.dispatch('deleteBackendError', id)
     // },
@@ -183,6 +197,22 @@ export default {
       this.$socket.emit(ServerEvents.LOGIN, {
         username: 'john',
         password: 'john',
+        isAnonymous: false
+      })
+    },
+    loginAsLiz () {
+      console.log('Заходим как Лиз')
+      this.$socket.emit(ServerEvents.LOGIN, {
+        username: 'liz',
+        password: 'liz',
+        isAnonymous: false
+      })
+    },
+    loginAsOdie () {
+      console.log('Заходим как Оди')
+      this.$socket.emit(ServerEvents.LOGIN, {
+        username: 'odie',
+        password: 'odie',
         isAnonymous: false
       })
     }

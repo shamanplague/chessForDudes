@@ -45,7 +45,7 @@ export class GameManagementService {
     }   
     }()
 
-  startGame (user: User, gameId: number): Object {
+  async startGame (user: User, gameId: number): Promise<Game> {
     let startedGame = this.games.find(item => item.getId() === gameId)
 
     if (startedGame.getType() === Game.gameTypes.CHECKERS) {
@@ -54,7 +54,7 @@ export class GameManagementService {
       }
       
       this.games.splice(this.games.indexOf(startedGame), 1)
-      return this.CheckersService.startGame(startedGame)
+      return await this.CheckersService.startGame(startedGame)
     }
   }
       

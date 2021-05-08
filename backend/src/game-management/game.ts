@@ -60,7 +60,7 @@ export class Game {
 	deleteSpectrator (user: User): void {
     this.spectrators = this.spectrators.filter(item => item.getId() !== user.getId())
   }
-  getPlayers (): Array<User> {
+  getPlayers () {
     return this.players
   }
   getSpectrators (): Array<User> {

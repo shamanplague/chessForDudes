@@ -6,13 +6,15 @@ import { JwtGuard } from 'src/guards/ws-jwt.guard'
 import { UsersService } from 'src/users/users.service'
 import { GameManagementService } from 'src/game-management/game-management.service'
 import ClientsEvents from 'src/websockets/client.events'
+import { CheckersService } from 'src/play-modules/checkers/checkers.service'
 
 @UseGuards(JwtGuard)
 @WebSocketGateway()
 export class GameManagementGateway {
   constructor (
     private GameManagementService : GameManagementService,
-    private UsersService : UsersService
+    private UsersService : UsersService,
+    private CheckersService : CheckersService
   ) {}
 
   @WebSocketServer() 
@@ -22,7 +24,9 @@ export class GameManagementGateway {
   async handleCreateGame(
     @UserToken() hosterToken: string
   ) {
-    await this.GameManagementService.createGame(hosterToken)    
+    let game = await this.GameManagementService.createGame(hosterToken)
+    let user = await this.UsersService.findByToken(hosterToken)
+    this.server.sockets.sockets[user.getSocketId()].join(`${game.getId()}`)
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
 
@@ -33,6 +37,7 @@ export class GameManagementGateway {
   ) {
     let user = await this.UsersService.findByToken(clientToken)
 
+    this.server.sockets.sockets[user.getSocketId()].join(payload.game_id)
     this.GameManagementService.joinGame(user, payload.game_id, payload.asPlayer)
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
@@ -44,6 +49,7 @@ export class GameManagementGateway {
   ) {
     let user = await this.UsersService.findByToken(clientToken)
 
+    this.server.sockets.sockets[user.getSocketId()].leave(payload.game_id)
     this.GameManagementService.leaveGame(user, payload.game_id, payload.isPlayer)
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
@@ -55,6 +61,13 @@ export class GameManagementGateway {
   ) {
     let user = await this.UsersService.findByToken(clientToken)
 
+    Object.keys(
+      this.server.nsps['/'].adapter
+      .rooms[payload.game_id].sockets
+    ).forEach(item => {
+      this.server.sockets.sockets[item].leave(payload.game_id)
+    })
+    
     this.GameManagementService.deleteGame(user, payload.game_id)
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
@@ -66,16 +79,15 @@ export class GameManagementGateway {
   ) {
     // console.log('start payload', payload)
     let user = await this.UsersService.findByToken(clientToken)
-
-    // let socketId = (await this.GameManagementService.findById(payload.game_id)).getPlayers()[0].getSocketId()
-    // let sockets = this.server.sockets.sockets
-    // sockets[socketId].emit(ClientsEvents.BACKGROUND_NOTIFICATION_FROM_SERVER, { message: 'YOUR_MOVE' })
-
     let game = await this.GameManagementService.startGame(user, payload.game_id)
-    console.log('formattedGame', game)
-    this.server.emit(ClientsEvents.START_GAME, { new_game: game })
+    
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
-    this.server.emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Игра №${payload.game_id} начинается` })
+    // this.server.sockets.sockets[game.getHoster().getSocketId()]
+    // .emit(ClientsEvents.BACKGROUND_NOTIFICATION_FROM_SERVER, { message: 'YOUR_MOVE' })
+    this.server.to(payload.game_id).emit(ClientsEvents.START_GAME, {
+      new_game: await this.CheckersService.formatGameForSend(game.getId())
+    })
+    this.server.to(payload.game_id).emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Игра №${payload.game_id} начинается` })
   }
 
   @SubscribeMessage('gameList')

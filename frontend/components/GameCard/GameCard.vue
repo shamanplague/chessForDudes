@@ -80,7 +80,6 @@ export default {
       }
     },
     exitGame (id, isPlayer) {
-      console.log('Выходим из игры')
       this.$socket.emit(ServerEvents.LEAVE_GAME, {
         game_id: id,
         isPlayer
