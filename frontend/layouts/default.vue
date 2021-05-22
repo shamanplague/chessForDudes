@@ -3,8 +3,8 @@
     <HeaderNav />
     <div class="warnings-wrapper">
       <div class="warnings">
-        <b-alert v-for="item in backendErrors" :key="item.id" show variant="danger">{{ item.message }}</b-alert>
-        <b-alert v-for="item in backendNotifications" :key="item.id" show variant="info">{{ item.message }}</b-alert>
+        <b-alert v-for="item in backendErrors" :key="`n-${item.id}`" show variant="danger">{{ item.message }}</b-alert>
+        <b-alert v-for="item in backendNotifications" :key="`bn-${item.id}`" show variant="info">{{ item.message }}</b-alert>
       </div>
     </div>
     <Nuxt />
@@ -16,6 +16,7 @@
 import Vue from 'vue'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import HeaderNav from '../components/HeaderNav/HeaderNav'
+import ServerEvents from '@/websockets/server-events'
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css'
@@ -34,6 +35,8 @@ export default {
   mounted () {
     console.log('Маунт приложения')
     // this.$store.dispatch('setTokenFromCookies')
+    console.log('Запрос актуальных игр')
+    this.$socket.emit(ServerEvents.GET_ACTIVE_CHECKERS_GAMES)
   },
   components : {
     HeaderNav

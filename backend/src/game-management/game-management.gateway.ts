@@ -67,7 +67,7 @@ export class GameManagementGateway {
     ).forEach(item => {
       this.server.sockets.sockets[item].leave(payload.game_id)
     })
-    
+
     this.GameManagementService.deleteGame(user, payload.game_id)
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
   }
@@ -75,19 +75,17 @@ export class GameManagementGateway {
   @SubscribeMessage('startGame')
   async handleStartGame(
     @UserToken() clientToken: string,
-    @MessageBody() payload
+    @MessageBody() payload: { game_id: number }
   ) {
-    // console.log('start payload', payload)
     let user = await this.UsersService.findByToken(clientToken)
-    let game = await this.GameManagementService.startGame(user, payload.game_id)
+    this.GameManagementService.verifyGame(user, payload.game_id)
+    let gameForStart = await this.GameManagementService.findById(payload.game_id)
+    await this.CheckersService.startGame(user, gameForStart)
     
+    this.GameManagementService.deleteGame(user, payload.game_id)
     this.server.emit(ClientsEvents.GAME_LIST, { games : this.GameManagementService.getGameListForSending() })
-    // this.server.sockets.sockets[game.getHoster().getSocketId()]
-    // .emit(ClientsEvents.BACKGROUND_NOTIFICATION_FROM_SERVER, { message: 'YOUR_MOVE' })
-    this.server.to(payload.game_id).emit(ClientsEvents.START_GAME, {
-      new_game: await this.CheckersService.formatGameForSend(game.getId())
-    })
-    this.server.to(payload.game_id).emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Игра №${payload.game_id} начинается` })
+    this.server.to(`${payload.game_id}`).emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Игра №${payload.game_id} начинается` })
+    this.server.to(`${payload.game_id}`).emit(ClientsEvents.BACKGROUND_NOTIFICATION_FROM_SERVER, { message: `GAME_STARTED`, game_id: payload.game_id })
   }
 
   @SubscribeMessage('gameList')

@@ -33,6 +33,9 @@ export default {
       selectedCheckerCoordinate: null
     }
   },
+  mounted () {
+    console.log('boardState', this.boardState)
+  },
   watch : {
     selectedCheckerCoordinate (v) {
       console.log('selectedCheckerCoordinate', v)

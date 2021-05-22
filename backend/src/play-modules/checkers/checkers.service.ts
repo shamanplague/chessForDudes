@@ -8,6 +8,8 @@ import { CheckersPlayer } from './classes/checkers-player'
 import { Step } from './classes/step'
 import { WsException } from '@nestjs/websockets'
 import { UsersService } from 'src/users/users.service'
+import { GameManagementService } from 'src/game-management/game-management.service'
+import { User } from 'src/users/user'
 
 @Injectable()
 export class CheckersService {
@@ -16,15 +18,19 @@ export class CheckersService {
   ]
 
   constructor (
+    // private GameManagementService: GameManagementService,
     private UsersService: UsersService
   ){}
 
-  async startGame (game: Game): Promise<CheckersGame> {
+  async startGame (user: User, game: Game): Promise<CheckersGame> {
+    
+    // let game = await this.GameManagementService.findById(gameId)
+    // let game = await this.findById(gameId)
     let newCheckersPlayers = game.getPlayers().map(item => {
       return new CheckersPlayer(item, game.getHoster().getId() === item.getId())
     })
 
-    console.log('newCheckersPlayers', newCheckersPlayers)
+    // console.log('newCheckersPlayers', newCheckersPlayers)
 
     let newGame = new CheckersGame(
       game.getId(),
@@ -35,8 +41,10 @@ export class CheckersService {
     )
 
     this.games.push(newGame)
-    // console.log('Закинули игру', this.games)
     await this.loadBoardPreset(newGame.getId(), CheckersPreset)
+    // console.log('Стучится user', user)
+
+    // console.log('Закинули игру', this.games)
     return newGame
   }
 
@@ -64,12 +72,20 @@ export class CheckersService {
     .isCheckersColorWhite() ? 'white' : 'black'
   }
 
-  async formatGameForSend (gameId: number): Promise<Object> {
+  getAllActiveGamesForUser ( user: User ): Array<CheckersGame> {
+    let res = this.games.filter(item => 
+      item.getPlayers().some(item => item.getId() === user.getId())
+      ||
+      item.getSpectrators().some(item => item.getId() === user.getId())
+    ) 
+    // console.log('forUser', res)
+    return res
+  }
+
+  getFormattedGame (game: CheckersGame): Promise<Object> {
     let object: any = {}
 
-    // console.log('приехало gameId', gameId)
-
-    let game = await this.findById(gameId)
+    console.log('приехала game', game.getId())
 
     object.gameId = game.getId()
     object.players = game.getPlayers().map(item => {

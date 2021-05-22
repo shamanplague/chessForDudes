@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import { WsException } from '@nestjs/websockets'
-import { CheckersGame } from 'src/play-modules/checkers/checkers-game'
-import { CheckersService } from 'src/play-modules/checkers/checkers.service'
 import { User } from 'src/users/user'
 import { UsersService } from '../users/users.service'
 import { Game } from './game'
@@ -10,7 +8,7 @@ import { Game } from './game'
 export class GameManagementService {
   constructor (
     private UsersService: UsersService,
-    private CheckersService: CheckersService
+    // private CheckersService: CheckersService
   ) {}
 
   private games: Array<Game> = [
@@ -18,6 +16,8 @@ export class GameManagementService {
   ]
 
   async findById(id: number): Promise<Game> {
+    // console.log('id', id)
+    // console.log('this.games', this.games)
     return this.games.find(item => item.getId() === id)
   }
 
@@ -45,16 +45,17 @@ export class GameManagementService {
     }   
     }()
 
-  async startGame (user: User, gameId: number): Promise<Game> {
+  verifyGame (user: User, gameId: number): void {
     let startedGame = this.games.find(item => item.getId() === gameId)
+
+    if (startedGame.getHoster().getId() !== user.getId()) {
+      throw new WsException('You are not a hoster for starting game')
+    }
 
     if (startedGame.getType() === Game.gameTypes.CHECKERS) {
       if (startedGame.getPlayers().length !== 2) {
         throw new WsException('Game must include two players')
       }
-      
-      this.games.splice(this.games.indexOf(startedGame), 1)
-      return await this.CheckersService.startGame(startedGame)
     }
   }
       

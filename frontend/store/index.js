@@ -37,12 +37,13 @@ export const actions = {
   SOCKET_gameManagenentData () {
 
   },
-  SOCKET_startGame ({ commit }, data) {
-    console.log('Прикатила игра', data.new_game)
-    commit('addActiveGame', data.new_game)
+  SOCKET_actualGameState ({ commit }, data) {
+    console.log('Приехала игра', data)
+    commit('refreshActiveGames', [data.game])
   },
   SOCKET_activeGames ({ commit }, data) {
-    commit('refreshActiveGame', data.game)
+    console.log('Приехали игры', data)
+    commit('refreshActiveGames', data.games)
   },
   SOCKET_notificationFromServer ({ state, commit }, data) {
     data.id = state.backendErrors.length ?
@@ -89,14 +90,27 @@ export const actions = {
 }
 
 export const mutations = {
-  addActiveGame (state, data) {
-    state.activeGames.push(data)
-  },
-  refreshActiveGame (state, data) {
-    let neededGame = state.activeGames.find(item => item.id === data.id)
-    Object.keys(data).forEach(item => {
-      neededGame[item] = data[item]
-    })
+  // addActiveGame (state, data) {
+  //   state.activeGames.push(data)
+  // },
+  refreshActiveGames (state, data) {
+
+      data.forEach(recievedGame => {
+        let neededGame = state.activeGames
+        .find(storedGame => storedGame.id === recievedGame.id)
+
+        if (neededGame) {
+          let index = state.activeGames.indexOf(
+            state.activeGames.find(storedGame => storedGame.id === recievedGame.id)
+          )
+
+          console.log('index', index)
+
+          state.activeGames[index] = recievedGame
+        } else {
+          state.activeGames.push(recievedGame)
+        }
+      })
   },
   refreshGameList (state, data) {
     state.games = data

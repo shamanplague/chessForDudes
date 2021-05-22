@@ -13,15 +13,32 @@ export class CheckersGateway {
 
   constructor (
     private UsersService : UsersService,
-    private CheckersService : CheckersService,
+    private CheckersService : CheckersService
   ) {}
+
+  @SubscribeMessage(ServerEvents.GET_ACTIVE_CHECKERS_GAMES)
+  async handleGetActiveGames(
+    @ConnectedSocket() client: Socket,
+    @UserToken() userToken: string
+  ): Promise<void> {
+    console.log('handleGetActiveGames method')
+    let user = await this.UsersService.findByToken(userToken)
+    let games = this.CheckersService
+    .getAllActiveGamesForUser(user)
+    .map(item => this.CheckersService.getFormattedGame(item))
+
+    client.emit(ClientsEvents.GET_ACTIVE_CHECKERS_GAMES, {
+      games
+    })
+  }
 
   @SubscribeMessage(ServerEvents.DEFINE_COLOR)
   async handleDefineColor(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { gameId: number},//сделать так везде
+    @MessageBody() payload: { gameId: number},//todo сделать так везде
     @UserToken() userToken: string
   ): Promise<void> {
+    // console.log('handleDefineColor method')
     let color = await this.CheckersService.defineColor(userToken, payload.gameId)
     client.emit(ClientsEvents.DEFINE_COLOR, { color })
   }
@@ -33,7 +50,7 @@ export class CheckersGateway {
   ): Promise<void> {
     let user = await this.UsersService.findByToken(userToken)
     let currentUserSocketId = user.getSocketId()
-    console.log('Обрабатываем makeMove', payload)
+    // console.log('Обрабатываем makeMove', payload)
 
     if (!/^[a-h][1-8]$/.test(payload.coordinates.from) 
         || !/^[a-h][1-8]$/.test(payload.coordinates.to)) {
@@ -41,10 +58,10 @@ export class CheckersGateway {
     }
 
     await this.CheckersService.makeMove(user.getId(), payload)
-    // let game = await this.CheckersService.findById(payload.gameId)
+    let game = await this.CheckersService.findById(payload.gameId)
 
-    this.server.to(payload.gameId).emit(ClientsEvents.ACTIVE_GAMES,
-      { game: await this.CheckersService.formatGameForSend(payload.gameId) }
+    this.server.to(payload.gameId).emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
+      { game: await this.CheckersService.getFormattedGame(game) }
     )
 
     // let neededSocketId = game.getPlayers()

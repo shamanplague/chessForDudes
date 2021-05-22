@@ -6,8 +6,8 @@ export default {
   ANONYMOUS_TOKEN_FROM_SERVER: 'anonymousTokenFromServer',
   NOTIFICATION_FROM_SERVER: 'notificationFromServer',
   BACKGROUND_NOTIFICATION_FROM_SERVER: 'backgroundNotificationFromServer',
-  START_GAME: 'startGame',
   PLAYERS_CURRENT_GAMES: 'playersCurrentGames',
-  ACTIVE_GAMES: 'activeGames',
-  DEFINE_COLOR: 'defineColor'
+  DEFINE_COLOR: 'defineColor',
+  GET_ACTUAL_GAME_STATE: 'actualGameState',
+  GET_ACTIVE_CHECKERS_GAMES: 'activeGames'
 }

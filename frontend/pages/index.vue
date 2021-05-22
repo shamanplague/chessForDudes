@@ -54,6 +54,11 @@ export default {
     },
     backgroundNotificationFromServer (data) {
       console.log('Упало фоновое с бэка', data)
+      if (data.message === 'GAME_STARTED') {
+        this.$socket.emit(ServerEvents.GET_ACTIVE_CHECKERS_GAMES)
+        console.log('для пуша', data)
+        this.$router.push({ path: `/game/${data.game_id}` })
+      }
     },
     tokenFromServer () {
       setTimeout(() => {

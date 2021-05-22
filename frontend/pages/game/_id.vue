@@ -11,8 +11,6 @@
       />
     </div>
 
-    {{ activeGame }}
-
   </div>
 </template>
 
@@ -33,13 +31,10 @@ export default {
     Board
   },
   mounted () {
-    this.gameId = this.$route.params.id
+    this.gameId = +this.$route.params.id
   },
   computed : {
     activeGame () {
-      this.$socket.emit(ServerEvents.DEFINE_COLOR, {
-        gameId: this.gameId       
-      })
       return this.$store.state.activeGames[0]
     },
     isMyMove () {
@@ -47,6 +42,7 @@ export default {
     },
     boardState () {
       if (!this.$store.state.activeGames.length) return []
+      console.log('this.$store.state.activeGames[0].board', this.$store.state.activeGames[0])
       // console.log('boardState', this.$store.state.activeGames[0].board)
       return this.$store.state.activeGames[0].board
     },
