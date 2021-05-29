@@ -1,6 +1,6 @@
 <template>
 
-  <div class="grid-wrapper">
+  <div class="grid-wrapper" :class="{ 'black-side' : !usersColorIsWhite }">
     <img class="board" src="/images/board.jpg">
     <div class="board-grid">
       <div v-for="cell in cells"
@@ -8,7 +8,7 @@
           class="cell"
           :class="{ 'selected' : cell.label === selectedCheckerCoordinate}"
           :id="cell.label"
-          @click="makeMove(cell.label)"
+          @click="cell.checker ? chooseChecker(cell.label) : makeMove(cell.label)"
       >
       <div  v-if="cell.checker"
             class="checker"
@@ -27,7 +27,7 @@
 import _ from 'lodash'
 
 export default {
-  props: ['boardState'],
+  props: [ 'usersColorIsWhite' ],
   data () {
     return {
       selectedCheckerCoordinate: null
@@ -37,11 +37,19 @@ export default {
     console.log('boardState', this.boardState)
   },
   watch : {
-    selectedCheckerCoordinate (v) {
-      console.log('selectedCheckerCoordinate', v)
-    }
+    // usersColorIsWhite (v) {
+    //   console.log('usersColorIsWhite', v)
+    // },
+    // selectedCheckerCoordinate (v) {
+    //   console.log('selectedCheckerCoordinate', v)
+    // }
   },
   computed : {
+    boardState () {
+      if (!this.$store.state.activeGames.length) return []
+      // console.log('this.$store.state.activeGames[0].board', this.$store.state.activeGames[0])
+      return this.$store.state.activeGames[0].board
+    },
     cells () {
       // if (!this.boardState) return []
 
@@ -89,13 +97,20 @@ export default {
   },
   methods : {
     chooseChecker (coordinate) {
+      let checkerIsWhite = this.boardState.find(item => item.coordinate === coordinate).checker.isWhite
+      if (this.usersColorIsWhite !== checkerIsWhite) return
+
       this.selectedCheckerCoordinate = coordinate
     },
     makeMove (id) {
+      if (!this.selectedCheckerCoordinate) return
+      if (this.selectedCheckerCoordinate === id) return
+
       this.$emit('makeMove', {
           from: this.selectedCheckerCoordinate,
           to: id
-        }) 
+        })
+      this.selectedCheckerCoordinate = null
     }
   }
 }

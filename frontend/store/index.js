@@ -68,7 +68,14 @@ export const actions = {
     }, 4000)
   },
   SOCKET_defineColor ({ state, commit }, data) {
-    console.log(data)
+    // console.log('defineColor', data)
+
+    let neededGame = state.activeGames
+    .find(item => item.gameId === data.gameId)
+
+    neededGame.usersColorIsWhite = data.usersColorIsWhite
+
+    commit('refreshActiveGames', [neededGame])
   },
   SOCKET_exception  ({ state, commit }, data) {
     data.id = state.backendErrors.length ?
@@ -90,27 +97,22 @@ export const actions = {
 }
 
 export const mutations = {
-  // addActiveGame (state, data) {
-  //   state.activeGames.push(data)
-  // },
   refreshActiveGames (state, data) {
+    data.forEach(recievedGame => {
+      let neededGame = state.activeGames
+      .find(storedGame => storedGame.gameId === recievedGame.gameId)
 
-      data.forEach(recievedGame => {
-        let neededGame = state.activeGames
-        .find(storedGame => storedGame.id === recievedGame.id)
+      if (neededGame) {
+        let usersColorIsWhite = neededGame.usersColorIsWhite
+        state.activeGames = state.activeGames
+        .filter(storedGame => storedGame.gameId !== recievedGame.gameId)
 
-        if (neededGame) {
-          let index = state.activeGames.indexOf(
-            state.activeGames.find(storedGame => storedGame.id === recievedGame.id)
-          )
-
-          console.log('index', index)
-
-          state.activeGames[index] = recievedGame
-        } else {
-          state.activeGames.push(recievedGame)
-        }
-      })
+        recievedGame.usersColorIsWhite = usersColorIsWhite
+        state.activeGames.push(recievedGame)
+      } else {
+        state.activeGames.push(recievedGame)
+      }
+    })
   },
   refreshGameList (state, data) {
     state.games = data

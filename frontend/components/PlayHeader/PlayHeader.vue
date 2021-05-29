@@ -11,7 +11,8 @@
     </div>
 
     <div class="chess-game-header__item move-info">
-      <div class="chess-game-header__item text">Ваш ход</div>
+      <div v-if="isMyMove" class="chess-game-header__item text">Ваш ход</div>
+      <div v-else class="chess-game-header__item text">Ход соперника</div>
       <div class="chess-game-header__item timer">0:30</div>
     </div>
 
@@ -37,6 +38,7 @@ export default {
       
     }
   },
+  props: [ 'isMyMove' ],
   methods : {
     
   }

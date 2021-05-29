@@ -46,17 +46,12 @@ export default {
   },
   sockets : {
     connect () {
-      console.log('Соккеты подцепились', ServerEvents)
-    },
-    startGame (data) {
-      console.log('для пуша', data)
-      this.$router.push({ path: `/game/${data.new_game.gameId}` })
+      console.log('Соккеты подцепились')
     },
     backgroundNotificationFromServer (data) {
       console.log('Упало фоновое с бэка', data)
       if (data.message === 'GAME_STARTED') {
         this.$socket.emit(ServerEvents.GET_ACTIVE_CHECKERS_GAMES)
-        console.log('для пуша', data)
         this.$router.push({ path: `/game/${data.game_id}` })
       }
     },
@@ -96,9 +91,6 @@ export default {
 
         return item
       }), 'id', 'desc')
-    },
-    activeGames () {
-      
     }
   },
   mounted() {
@@ -167,7 +159,7 @@ export default {
     }
   },
   methods : {
-    defineColor () {// корректно запрашивать для каждой игры
+    defineColor () {// todo корректно запрашивать для каждой игры
       this.$socket.emit(ServerEvents.DEFINE_COLOR, {
         gameId: this.gameId       
       })

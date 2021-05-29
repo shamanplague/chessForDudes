@@ -41,13 +41,30 @@ export default {
   components : {
     HeaderNav
   },
+  sockets : {
+    // activeGames (v) {
+    //   console.log('Обрабатываем activeGames', v)
+    // },
+    // actualGameState (v) {
+    //   console.log('Обрабатываем actualGameState', v)
+    // }
+  },
   watch : {
     backendErrors (v) {
       console.log('backendErrors изменился', v)
     },
     backendNotifications (v) {
-      console.log('backendErrors изменился', v)
+      console.log('backendNotifications изменился', v)
     },
+    activeGames (v) {
+      console.log('activeGames изменился', v)
+      v.forEach(item => {
+        if (!item.hasOwnProperty('usersColorIsWhite')) {
+          this.defineColor(item.gameId)
+        }
+      })
+      console.log('activeGames', v)
+    }
   },
   computed: {
     backendErrors () {
@@ -55,6 +72,17 @@ export default {
     },
     backendNotifications () {
       return this.$store.state.backendNotifications
+    },
+    activeGames () {
+      return this.$store.state.activeGames
+    }
+  },
+  methods: {
+    defineColor (gameId) {
+      console.log('Узнаём цвет')
+      this.$socket.emit(ServerEvents.DEFINE_COLOR, {
+        gameId       
+      })
     }
   }
 }

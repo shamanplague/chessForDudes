@@ -6,7 +6,8 @@
     </div>
 
     <div class="board-wrapper">
-      <Board  :boardState.sync="boardState"
+      <Board  v-if="activeGame"
+              :usersColorIsWhite.sync="activeGame.usersColorIsWhite"
               @makeMove="makeMove($event)" 
       />
     </div>
@@ -35,17 +36,16 @@ export default {
   },
   computed : {
     activeGame () {
+      // if (this.$store.state.activeGames[0]) {
+      //   console.log('activeGame.usersColorIsWhite', this.$store.state.activeGames[0].usersColorIsWhite)
+      // }
+      
       return this.$store.state.activeGames[0]
     },
     isMyMove () {
-      
-    },
-    boardState () {
-      if (!this.$store.state.activeGames.length) return []
-      console.log('this.$store.state.activeGames[0].board', this.$store.state.activeGames[0])
-      // console.log('boardState', this.$store.state.activeGames[0].board)
-      return this.$store.state.activeGames[0].board
-    },
+      if (!this.activeGame) return
+      return this.activeGame.isNowWhiteMove === this.activeGame.usersColorIsWhite
+    }
   },
   methods : {
     makeMove (coordinates) {

@@ -27,6 +27,10 @@ export class CheckersGateway {
     .getAllActiveGamesForUser(user)
     .map(item => this.CheckersService.getFormattedGame(item))
 
+    games.forEach(item => {
+      this.server.sockets.sockets[user.getSocketId()].join(`${item.gameId}`)
+    })
+
     client.emit(ClientsEvents.GET_ACTIVE_CHECKERS_GAMES, {
       games
     })
@@ -38,9 +42,8 @@ export class CheckersGateway {
     @MessageBody() payload: { gameId: number},//todo сделать так везде
     @UserToken() userToken: string
   ): Promise<void> {
-    // console.log('handleDefineColor method')
-    let color = await this.CheckersService.defineColor(userToken, payload.gameId)
-    client.emit(ClientsEvents.DEFINE_COLOR, { color })
+    let usersColorIsWhite = await this.CheckersService.defineColor(userToken, payload.gameId)
+    client.emit(ClientsEvents.DEFINE_COLOR, { gameId: payload.gameId, usersColorIsWhite })
   }
   
   @SubscribeMessage(ServerEvents.MAKE_MOVE)
@@ -50,7 +53,6 @@ export class CheckersGateway {
   ): Promise<void> {
     let user = await this.UsersService.findByToken(userToken)
     let currentUserSocketId = user.getSocketId()
-    // console.log('Обрабатываем makeMove', payload)
 
     if (!/^[a-h][1-8]$/.test(payload.coordinates.from) 
         || !/^[a-h][1-8]$/.test(payload.coordinates.to)) {
@@ -60,7 +62,8 @@ export class CheckersGateway {
     await this.CheckersService.makeMove(user.getId(), payload)
     let game = await this.CheckersService.findById(payload.gameId)
 
-    this.server.to(payload.gameId).emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
+    // this.server.to(`${payload.gameId}`).emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
+    this.server.emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
       { game: await this.CheckersService.getFormattedGame(game) }
     )
 

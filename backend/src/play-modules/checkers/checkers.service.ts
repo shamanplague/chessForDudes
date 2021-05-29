@@ -10,6 +10,7 @@ import { WsException } from '@nestjs/websockets'
 import { UsersService } from 'src/users/users.service'
 import { GameManagementService } from 'src/game-management/game-management.service'
 import { User } from 'src/users/user'
+import { Board } from './classes/board'
 
 @Injectable()
 export class CheckersService {
@@ -61,7 +62,7 @@ export class CheckersService {
     })
   }
 
-  async defineColor (userToken: string, gameId: number) {
+  async defineColor (userToken: string, gameId: number): Promise<boolean> {
     let user = await this.UsersService.findByToken(userToken)
     let game = await this.findById(gameId)
 
@@ -69,7 +70,7 @@ export class CheckersService {
 
     return game.getPlayers()
     .find(item => item.getId() === user.getId())
-    .isCheckersColorWhite() ? 'white' : 'black'
+    .isCheckersColorWhite()
   }
 
   getAllActiveGamesForUser ( user: User ): Array<CheckersGame> {
@@ -82,10 +83,15 @@ export class CheckersService {
     return res
   }
 
-  getFormattedGame (game: CheckersGame): Promise<Object> {
+  getFormattedGame (game: CheckersGame): {
+    gameId: number,
+    players: Array<CheckersPlayer>,
+    isNowWhiteMove: boolean,
+    board: Board
+  }{
     let object: any = {}
 
-    console.log('приехала game', game.getId())
+    // console.log('приехала game', game.getId())
 
     object.gameId = game.getId()
     object.players = game.getPlayers().map(item => {
@@ -113,7 +119,7 @@ export class CheckersService {
   }
 
   async makeMove (userId: number, move: {gameId: number, coordinates: {from: string, to: string}}) {
-    // console.log('move', move)
+    console.log('move', move)
     let fromLabel = move.coordinates.from.match(/[a-h]/)[0]
     let fromNumber = +move.coordinates.from.match(/[1-8]/)[0]
     let toLabel = move.coordinates.to.match(/[a-h]/)[0]
@@ -126,11 +132,16 @@ export class CheckersService {
 
     let player = game.getCheckersPlayerById(userId)
 
+    let step = new Step(move.gameId, fromCoordinate, toCoordinate)
+
+    let checker = game.getBoard().getCellByCoordinates(step.getStartCell()).getChecker()
     if (player.isCheckersColorWhite() !== game.isNowWhiteMove()) {
       throw new WsException('Is not your move')
     }
 
-    let step = new Step(move.gameId, fromCoordinate, toCoordinate)
+    if (player.isCheckersColorWhite() !== checker.isWhite() ) {
+      throw new WsException('Is not your checker')
+    }
 
     this.moveChecker(game, step)
 
@@ -140,7 +151,7 @@ export class CheckersService {
     // console.log('toCoordinate', toCoordinate)
   }
 
-  private async moveChecker (game: CheckersGame, step: Step) {
+  private moveChecker (game: CheckersGame, step: Step): void {
     let checker = game.getBoard().getCellByCoordinates(step.getStartCell()).getChecker()
     game.getBoard().getCellByCoordinates(step.getTargetCell()).setChecker(checker)
     game.getBoard().getCellByCoordinates(step.getStartCell()).removeChecker()
