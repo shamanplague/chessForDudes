@@ -6,7 +6,10 @@
       <div v-for="cell in cells"
           :key="cell.label"
           class="cell"
-          :class="{ 'selected' : cell.label === selectedCheckerCoordinate}"
+          :class="[
+          { 'selected' : cell.label === selectedCheckerCoordinate},
+          { 'available' : availableMoves.includes(cell.label)}
+          ]"
           :id="cell.label"
           @click="cell.checker ? chooseChecker(cell.label) : makeMove(cell.label)"
       >
@@ -25,10 +28,10 @@
 <script>
 
 import _ from 'lodash'
-import ServerEvents from '@/websockets/server-events'
+// import ServerEvents from '@/websockets/server-events'
 
 export default {
-  props: [ 'usersColorIsWhite' ],
+  props: [ 'usersColorIsWhite', 'availableMoves' ],
   data () {
     return {
       selectedCheckerCoordinate: null
@@ -38,6 +41,9 @@ export default {
     console.log('boardState', this.boardState)
   },
   watch : {
+    availableMoves (v) {
+      console.log('availableMoves на борде', v)
+    }
     // usersColorIsWhite (v) {
     //   console.log('usersColorIsWhite', v)
     // },

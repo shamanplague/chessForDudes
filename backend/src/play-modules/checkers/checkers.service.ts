@@ -166,6 +166,104 @@ export class CheckersService {
     console.log('user', user)
     console.log('gameId', gameId)
 
-    return [new CellCoordinate('h1')]
+    let board = this.games
+    .find(item => item.getId() === gameId)
+    .getBoard()
+
+    let getNextChart = (letter: string) => {
+      let nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1)
+      return /^[a-h]$/.test(nextLetter) ? nextLetter : null
+    }
+
+    let getPrevChart = (letter: string) => {
+      let nextLetter = String.fromCharCode(letter.charCodeAt(0) - 1)
+      return /^[a-h]$/.test(nextLetter) ? nextLetter : null
+    }
+
+    let getNextNumber = (number: number) => {
+      return number + 1 > 8 ? null : number + 1
+    }
+
+    let getPrevNumber = (number: number) => {
+      return number - 1 < 1 ? null : number - 1
+    }
+
+    console.log('prev', getPrevChart(coordinate.getLetter()))
+    console.log('next', getNextChart(coordinate.getLetter()))
+
+    let availableCells: Array<CellCoordinate> = []
+
+    let tryAddCell = (letter: string, number: number) => {
+      let findedCell = board.getCellByCoordinates(
+        new CellCoordinate(`${letter}${number}`)
+      )
+      if (findedCell.hasChecker()) {
+        availableCells.push(findedCell.getCoordinates())
+      }
+    }
+
+    let checkersPlayer = (await this.findById(gameId))
+    .getPlayers()
+    .find(item => item.getId() === user.getId())
+
+    //для простого хода
+    let neededNumber = checkersPlayer
+    .isCheckersColorWhite() ? 
+      getNextNumber(coordinate.getNumber())
+      :
+      getPrevNumber(coordinate.getNumber())
+
+    if (getPrevChart(coordinate.getLetter()) && neededNumber) {
+      tryAddCell(getPrevChart(coordinate.getLetter()), neededNumber)
+    }
+
+    if (getNextChart(coordinate.getLetter()) && neededNumber) {
+      tryAddCell(getNextChart(coordinate.getLetter()), neededNumber)
+    }
+
+    // переписать на функцию с аргументами направления
+    // let tryMakeJump =  () => {
+
+    // }
+
+    //для прыжка
+    //право верх
+    let nearRightUpLetter = getNextChart(coordinate.getLetter())
+    let rightUpLetter = getNextChart(nearRightUpLetter)
+    let nearRightUpNumber = getNextNumber(coordinate.getNumber())
+    let rightUpNumber = getNextNumber(nearRightUpNumber)
+    // let isOpponentsChecker = board
+    // .getCellByCoordinates(new CellCoordinate(`${nearRightUpLetter}${nearRightUpNumber}`))
+    // .getChecker().isWhite() !== checkersPlayer.isCheckersColorWhite()
+    // if (rightUpLetter && rightUpNumber && isOpponentsChecker) {
+    if (rightUpLetter && rightUpNumber) {
+      tryAddCell(rightUpLetter, rightUpNumber)
+    }
+    //право низ
+    let nearRightDownLetter = getNextChart(coordinate.getLetter())
+    let rightDownLetter = getNextChart(nearRightDownLetter)
+    let nearRightDownNumber = getPrevNumber(coordinate.getNumber())
+    let rightDownNumber = getPrevNumber(nearRightDownNumber)
+    if (rightDownLetter && rightDownNumber) {
+      tryAddCell(rightDownLetter, rightDownNumber)
+    }
+    //лево низ
+    let nearleftDownLetter = getPrevChart(coordinate.getLetter())
+    let leftDownLetter = getPrevChart(nearleftDownLetter)
+    let nearLeftDownNumber = getPrevNumber(coordinate.getNumber())
+    let leftDownNumber = getPrevNumber(nearLeftDownNumber)
+    if (leftDownLetter && leftDownNumber) {
+      tryAddCell(leftDownLetter, leftDownNumber)
+    }
+    //лево верх
+    let nearLeftUpLetter = getPrevChart(coordinate.getLetter())
+    let leftUpLetter = getPrevChart(nearLeftUpLetter)
+    let nearLeftUpNumber = getNextNumber(coordinate.getNumber())
+    let leftUpNumber = getNextNumber(nearLeftUpNumber)
+    if (leftUpLetter && leftUpNumber) {
+      tryAddCell(leftUpLetter, leftUpNumber)
+    }
+    // return [new CellCoordinate('h1')]
+    return availableCells
   }
 }

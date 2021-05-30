@@ -8,6 +8,7 @@
     <div class="board-wrapper">
       <Board  v-if="activeGame"
               :usersColorIsWhite.sync="activeGame.usersColorIsWhite"
+              :availableMoves.sync="availableMoves"
               @makeMove="makeMove($event)" 
               @getAvailableMoves="getAvailableMoves($event)" 
       />
@@ -25,12 +26,19 @@ import ServerEvents from '@/websockets/server-events'
 export default {
   data () {
     return {
-      gameId: null
+      gameId: null,
+      availableMoves: []
     }
   },
   components : {
     PlayHeader,
     Board
+  },
+  sockets: {
+    getAvailableMoves (v) {
+      console.log('Приехали ходы на игре', v)
+      this.availableMoves = v.moves
+    }
   },
   mounted () {
     this.gameId = +this.$route.params.id
@@ -50,6 +58,7 @@ export default {
   },
   methods : {
     makeMove (coordinates) {
+      this.availableMoves = []
       this.$socket.emit(ServerEvents.MAKE_MOVE, {
         gameId: this.gameId,
         coordinates
