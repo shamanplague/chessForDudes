@@ -8,7 +8,6 @@ import { CheckersPlayer } from './classes/checkers-player'
 import { Step } from './classes/step'
 import { WsException } from '@nestjs/websockets'
 import { UsersService } from 'src/users/users.service'
-import { GameManagementService } from 'src/game-management/game-management.service'
 import { User } from 'src/users/user'
 import { Board } from './classes/board'
 
@@ -19,19 +18,14 @@ export class CheckersService {
   ]
 
   constructor (
-    // private GameManagementService: GameManagementService,
     private UsersService: UsersService
   ){}
 
   async startGame (user: User, game: Game): Promise<CheckersGame> {
-    
-    // let game = await this.GameManagementService.findById(gameId)
-    // let game = await this.findById(gameId)
+
     let newCheckersPlayers = game.getPlayers().map(item => {
       return new CheckersPlayer(item, game.getHoster().getId() === item.getId())
     })
-
-    // console.log('newCheckersPlayers', newCheckersPlayers)
 
     let newGame = new CheckersGame(
       game.getId(),
@@ -43,20 +37,16 @@ export class CheckersService {
 
     this.games.push(newGame)
     await this.loadBoardPreset(newGame.getId(), CheckersPreset)
-    // console.log('Стучится user', user)
 
-    // console.log('Закинули игру', this.games)
     return newGame
   }
 
-  async findById(id: number): Promise<CheckersGame> {
-    // console.log('games', this.games)
-    // console.log('id', id)
+  async findGameById(id: number): Promise<CheckersGame> {
     return this.games.find(item => +item.getId() === +id)
   }
   
   async loadBoardPreset (gameId: number, preset: {checker: Checker, coordinates: CellCoordinate}[]) {
-    let game = await this.findById(gameId)
+    let game = await this.findGameById(gameId)
     preset.forEach(chunk => {
       game.getBoard().getCellByCoordinates(chunk.coordinates).setChecker(chunk.checker)
     })
@@ -64,9 +54,9 @@ export class CheckersService {
 
   async defineColor (userToken: string, gameId: number): Promise<boolean> {
     let user = await this.UsersService.findByToken(userToken)
-    let game = await this.findById(gameId)
+    let game = await this.findGameById(gameId)
 
-    //проверить, не левый ли хуй стучится
+    //todo проверить, не левый ли хуй стучится
 
     return game.getPlayers()
     .find(item => item.getId() === user.getId())
@@ -78,8 +68,8 @@ export class CheckersService {
       item.getPlayers().some(item => item.getId() === user.getId())
       ||
       item.getSpectrators().some(item => item.getId() === user.getId())
-    ) 
-    // console.log('forUser', res)
+    )
+
     return res
   }
 
@@ -89,9 +79,7 @@ export class CheckersService {
     isNowWhiteMove: boolean,
     board: Board
   }{
-    let object: any = {}
-
-    // console.log('приехала game', game.getId())
+    let object: any = {}//todo убрать any
 
     object.gameId = game.getId()
     object.players = game.getPlayers().map(item => {
@@ -113,24 +101,69 @@ export class CheckersService {
       return res
     })
 
-    // console.log('Скрутили игру', object)
-
     return object
   }
 
   async makeMove (userId: number, move: {gameId: number, coordinates: {from: string, to: string}}) {
-    console.log('move', move)
 
     let fromCoordinate = new CellCoordinate(move.coordinates.from)
     let toCoordinate = new CellCoordinate(move.coordinates.to)
 
-    let game = await this.findById(move.gameId)
+    let game = await this.findGameById(move.gameId)
 
     let player = game.getCheckersPlayerById(userId)
 
     let step = new Step(move.gameId, fromCoordinate, toCoordinate)
 
+    await this.validateMove(game, player, step)
+
+    this.moveChecker(game, step)
+
+    if (step.isJump()) {
+      let isMovingUp = 
+      step.getStartCell().getNumber() < step.getTargetCell().getNumber()
+      
+      let isMovingRight =
+      step.getStartCell().getLetter().charCodeAt(0) < step.getTargetCell().getLetter().charCodeAt(0)
+
+      let neededCellNumber = isMovingUp ?
+      step.getStartCell().getNumber() + 1
+      :
+      step.getStartCell().getNumber() - 1
+
+      let neededCellLetter = isMovingRight ?
+      String.fromCharCode(step.getStartCell().getLetter().charCodeAt(0) + 1)
+      :
+      String.fromCharCode(step.getStartCell().getLetter().charCodeAt(0) - 1)
+
+      this.takeFigure(game, new CellCoordinate(`${neededCellLetter}${neededCellNumber}`))
+
+    }
+
+    let currentChecker = game
+    .getBoard()
+    .getCellByCoordinates(step.getTargetCell())
+    .getChecker()
+
+    let isCheckerBecameKing = 
+    (player.isCheckersColorWhite()
+    &&
+    step.getTargetCell().getNumber() === game.getBoard().getMaxNumber())
+    ||
+    (!player.isCheckersColorWhite()
+    &&
+    step.getTargetCell().getNumber() === game.getBoard().getMinNumber())
+
+    if (isCheckerBecameKing && !currentChecker.isKing()) {
+      currentChecker.makeKing()
+    }
+
+  }
+
+  private async validateMove ( game: CheckersGame, player: CheckersPlayer, step: Step ): Promise<void> {
+
     let checker = game.getBoard().getCellByCoordinates(step.getStartCell()).getChecker()
+    
     if (player.isCheckersColorWhite() !== game.isNowWhiteMove()) {
       throw new WsException('Is not your move')
     }
@@ -139,12 +172,16 @@ export class CheckersService {
       throw new WsException('Is not your checker')
     }
 
-    this.moveChecker(game, step)
+    let isAvailableMove = this.getAvailableMoves(
+      game,
+      step.getStartCell()
+    )
+    .map(item => item.asString())
+    .includes(step.getTargetCell().asString())
 
-    game.passMove()
-
-    // console.log('fromCoordinate', fromCoordinate)
-    // console.log('toCoordinate', toCoordinate)
+    if (!isAvailableMove) {
+      throw new WsException('Is not valid move')
+    }
   }
 
   private moveChecker (game: CheckersGame, step: Step): void {
@@ -157,44 +194,33 @@ export class CheckersService {
     game.getBoard().getCellByCoordinates(step.getStartCell()).removeChecker()
   }
 
-  async getAvailableMoves (
-    user: User,
-    gameId: number,
+  getAvailableMoves (
+    game: CheckersGame,
     coordinate: CellCoordinate
-  ): Promise<Array<CellCoordinate>> {
-    console.log('coordinate', coordinate)
-    console.log('user', user)
-    console.log('gameId', gameId)
+  ): Array<CellCoordinate> {
 
-    let board = this.games
-    .find(item => item.getId() === gameId)
-    .getBoard()
-
-    let getNextChart = (letter: string) => {
+    let getNextChar = (letter: string) => {
       let nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1)
       return /^[a-h]$/.test(nextLetter) ? nextLetter : null
     }
 
-    let getPrevChart = (letter: string) => {
+    let getPrevChar = (letter: string) => {
       let nextLetter = String.fromCharCode(letter.charCodeAt(0) - 1)
       return /^[a-h]$/.test(nextLetter) ? nextLetter : null
     }
 
     let getNextNumber = (number: number) => {
-      return number + 1 > 8 ? null : number + 1
+      return number + 1 > game.getBoard().getMaxNumber() ? null : number + 1
     }
 
     let getPrevNumber = (number: number) => {
-      return number - 1 < 1 ? null : number - 1
+      return number - 1 < game.getBoard().getMinNumber() ? null : number - 1
     }
-
-    console.log('prev', getPrevChart(coordinate.getLetter()))
-    console.log('next', getNextChart(coordinate.getLetter()))
 
     let availableCells: Array<CellCoordinate> = []
 
     let tryAddCell = (letter: string, number: number) => {
-      let findedCell = board.getCellByCoordinates(
+      let findedCell = game.getBoard().getCellByCoordinates(
         new CellCoordinate(`${letter}${number}`)
       )
       if (!findedCell.hasChecker()) {
@@ -202,68 +228,90 @@ export class CheckersService {
       }
     }
 
-    let checkersPlayer = (await this.findById(gameId))
-    .getPlayers()
-    .find(item => item.getId() === user.getId())
+    let currentChecker = game.getBoard().getCellByCoordinates(coordinate).getChecker()
 
     //для простого хода
-    let neededNumber = checkersPlayer
-    .isCheckersColorWhite() ? 
+    let neededNumber = currentChecker.isWhite() ? 
       getNextNumber(coordinate.getNumber())
       :
       getPrevNumber(coordinate.getNumber())
 
-    if (getPrevChart(coordinate.getLetter()) && neededNumber) {
-      tryAddCell(getPrevChart(coordinate.getLetter()), neededNumber)
+    if (getPrevChar(coordinate.getLetter()) && neededNumber) {
+      tryAddCell(getPrevChar(coordinate.getLetter()), neededNumber)
     }
 
-    if (getNextChart(coordinate.getLetter()) && neededNumber) {
-      tryAddCell(getNextChart(coordinate.getLetter()), neededNumber)
+    if (getNextChar(coordinate.getLetter()) && neededNumber) {
+      tryAddCell(getNextChar(coordinate.getLetter()), neededNumber)
     }
 
-    // переписать на функцию с аргументами направления
-    // let tryMakeJump =  () => {
+    let tryAddJump = (isHorizontalRight: boolean, isVerticalUp: boolean): void => {
+      let numberFunc = isVerticalUp ? getNextNumber : getPrevNumber
+      let charFunc = isHorizontalRight ? getNextChar : getPrevChar
 
-    // }
+      let nearLetter = charFunc(coordinate.getLetter())
+      let letter = nearLetter ? charFunc(nearLetter) : null
+      let nearNumber = numberFunc(coordinate.getNumber())
+      let number = nearNumber ? numberFunc(nearNumber) : null
 
-    //для прыжка
-    //право верх
-    let nearRightUpLetter = getNextChart(coordinate.getLetter())
-    let rightUpLetter = getNextChart(nearRightUpLetter)
-    let nearRightUpNumber = getNextNumber(coordinate.getNumber())
-    let rightUpNumber = getNextNumber(nearRightUpNumber)
-    // let isOpponentsChecker = board
-    // .getCellByCoordinates(new CellCoordinate(`${nearRightUpLetter}${nearRightUpNumber}`))
-    // .getChecker().isWhite() !== checkersPlayer.isCheckersColorWhite()
-    // if (rightUpLetter && rightUpNumber && isOpponentsChecker) {
-    if (rightUpLetter && rightUpNumber) {
-      tryAddCell(rightUpLetter, rightUpNumber)
+      if (!letter || !number) return
+
+      let nearChecker = game
+      .getBoard()
+      .getCellByCoordinates(new CellCoordinate(`${nearLetter}${nearNumber}`))
+      .getChecker()
+
+      let isOpponentsChecker = (!nearChecker.isNull() &&
+      nearChecker.isWhite() !== currentChecker.isWhite())
+      if (letter && number && isOpponentsChecker) {
+      // if (rightUpLetter && rightUpNumber) {
+        tryAddCell(letter, number)
+      }
     }
-    //право низ
-    let nearRightDownLetter = getNextChart(coordinate.getLetter())
-    let rightDownLetter = getNextChart(nearRightDownLetter)
-    let nearRightDownNumber = getPrevNumber(coordinate.getNumber())
-    let rightDownNumber = getPrevNumber(nearRightDownNumber)
-    if (rightDownLetter && rightDownNumber) {
-      tryAddCell(rightDownLetter, rightDownNumber)
-    }
-    //лево низ
-    let nearleftDownLetter = getPrevChart(coordinate.getLetter())
-    let leftDownLetter = getPrevChart(nearleftDownLetter)
-    let nearLeftDownNumber = getPrevNumber(coordinate.getNumber())
-    let leftDownNumber = getPrevNumber(nearLeftDownNumber)
-    if (leftDownLetter && leftDownNumber) {
-      tryAddCell(leftDownLetter, leftDownNumber)
-    }
-    //лево верх
-    let nearLeftUpLetter = getPrevChart(coordinate.getLetter())
-    let leftUpLetter = getPrevChart(nearLeftUpLetter)
-    let nearLeftUpNumber = getNextNumber(coordinate.getNumber())
-    let leftUpNumber = getNextNumber(nearLeftUpNumber)
-    if (leftUpLetter && leftUpNumber) {
-      tryAddCell(leftUpLetter, leftUpNumber)
-    }
-    // return [new CellCoordinate('h1')]
+
+    tryAddJump(true, true)
+    tryAddJump(true, false)
+    tryAddJump(false, false)
+    tryAddJump(false, true)
+
     return availableCells
+  }
+
+  private takeFigure (game: CheckersGame, coordinate: CellCoordinate) {
+    game.getBoard().getCellByCoordinates(coordinate).removeChecker()
+  }
+
+  defineWinner (game: CheckersGame): CheckersPlayer {
+
+    let winner: CheckersPlayer
+
+    game.getPlayers().forEach(player => {
+      let opponent = game.getPlayers().find(item => item.getId() !== player.getId())
+
+      let cellsWithPlayersCheckers = game.getBoard()
+      .getCells()
+      .filter(item => 
+        item.hasChecker() && item.getChecker().isWhite() === player.isCheckersColorWhite()
+      )
+
+      if (!cellsWithPlayersCheckers.length) {
+        winner = opponent
+      }
+
+      let userHasMoves = false
+
+      for (let cell of cellsWithPlayersCheckers) {
+        if (this.getAvailableMoves(game, cell.getCoordinates()).length) {
+          userHasMoves = true
+          break
+        }
+      }
+
+      if (!userHasMoves) {
+        winner = opponent
+      }
+
+    })
+
+    return winner
   }
 }

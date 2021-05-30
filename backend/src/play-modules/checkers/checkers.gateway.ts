@@ -6,6 +6,7 @@ import { UserToken } from 'src/decorators/user-token.decorator'
 import { UsersService } from 'src/users/users.service'
 import { CheckersService } from 'src/play-modules/checkers/checkers.service'
 import { CellCoordinate } from './classes/cell.coordinate'
+import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable'
 
 @WebSocketGateway()
 export class CheckersGateway {
@@ -48,7 +49,7 @@ export class CheckersGateway {
   
   @SubscribeMessage(ServerEvents.MAKE_MOVE)
   async handleMakeMove(
-    @MessageBody() payload,
+    @MessageBody() payload: { gameId: number, coordinates: { from: string, to: string } },
     @UserToken() userToken: string
   ): Promise<void> {
     let user = await this.UsersService.findByToken(userToken)
@@ -59,7 +60,15 @@ export class CheckersGateway {
     }
 
     await this.CheckersService.makeMove(user.getId(), payload)
-    let game = await this.CheckersService.findById(payload.gameId)
+    let game = await this.CheckersService.findGameById(payload.gameId)
+
+    let winner = this.CheckersService.defineWinner(game)
+
+    if (winner) {
+      this.server.to(`${payload.gameId}`).emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Победитель ${winner.getUsername()}` })
+    } else {
+      game.passMove()
+    }
 
     this.server.to(`${payload.gameId}`).emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
       { game: this.CheckersService.getFormattedGame(game) }
@@ -75,12 +84,14 @@ export class CheckersGateway {
     let user = await this.UsersService.findByToken(userToken)
 
     let cell = new CellCoordinate(payload.coordinate)
+
+    let game = await this.CheckersService.findGameById(payload.gameId)
     
-    let availableMoves = await this.CheckersService
-    .getAvailableMoves(user, payload.gameId , cell)
+    let availableMoves = this.CheckersService
+    .getAvailableMoves(game, cell)
 
     client.emit(ClientsEvents.GET_AVAILABLE_MOVES, {
-      moves: availableMoves.map(item => `${item.getLetter()}${item.getNumber()}`)
+      moves: availableMoves.map(item => item.asString())
     })
   }
 }

@@ -60,4 +60,20 @@ export class Board {
       && itemCoordinates.getNumber() === coordinates.getNumber()
     })
   }
+
+  getMaxNumber (): number {
+    return 8
+  }
+
+  getMinNumber (): number {
+    return 1
+  }
+  
+  getMaxLetter (): string {
+    return 'h'
+  }
+
+  getMinLetter (): string {
+    return 'a'
+  }
 }

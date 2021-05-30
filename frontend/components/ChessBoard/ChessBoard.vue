@@ -13,11 +13,14 @@
           :id="cell.label"
           @click="cell.checker ? chooseChecker(cell.label) : makeMove(cell.label)"
       >
-      <div  v-if="cell.checker"
-            class="checker"
-            :class="{ 'white' : cell.checker.isWhite}"
-            @click.stop="chooseChecker(cell.label)"
-            ></div>
+        <div  v-if="cell.checker"
+              class="checker"
+              :class="{ 'white' : cell.checker.isWhite}"
+              :style="!usersColorIsWhite ? 'transform: rotate(180deg)' : ''"
+              @click.stop="chooseChecker(cell.label)"
+        >
+          <span class="king-mark">{{ cell.checker.isKing ? 'К' : '' }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -28,10 +31,9 @@
 <script>
 
 import _ from 'lodash'
-// import ServerEvents from '@/websockets/server-events'
 
 export default {
-  props: [ 'usersColorIsWhite', 'availableMoves' ],
+  props: [ 'usersColorIsWhite', 'availableMoves', 'boardState' ],
   data () {
     return {
       selectedCheckerCoordinate: null
@@ -41,24 +43,10 @@ export default {
     console.log('boardState', this.boardState)
   },
   watch : {
-    availableMoves (v) {
-      console.log('availableMoves на борде', v)
-    }
-    // usersColorIsWhite (v) {
-    //   console.log('usersColorIsWhite', v)
-    // },
-    // selectedCheckerCoordinate (v) {
-    //   console.log('selectedCheckerCoordinate', v)
-    // }
+    
   },
   computed : {
-    boardState () {
-      if (!this.$store.state.activeGames.length) return []
-      // console.log('this.$store.state.activeGames[0].board', this.$store.state.activeGames[0])
-      return this.$store.state.activeGames[0].board
-    },
     cells () {
-      // if (!this.boardState) return []
 
       let arr = []
 

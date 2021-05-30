@@ -9,6 +9,7 @@
       <Board  v-if="activeGame"
               :usersColorIsWhite.sync="activeGame.usersColorIsWhite"
               :availableMoves.sync="availableMoves"
+              :boardState.sync="activeGame.board"
               @makeMove="makeMove($event)" 
               @getAvailableMoves="getAvailableMoves($event)" 
       />
@@ -49,7 +50,7 @@ export default {
       //   console.log('activeGame.usersColorIsWhite', this.$store.state.activeGames[0].usersColorIsWhite)
       // }
       
-      return this.$store.state.activeGames[0]
+      return this.$store.state.activeGames.find(item => item.gameId === this.gameId)
     },
     isMyMove () {
       if (!this.activeGame) return

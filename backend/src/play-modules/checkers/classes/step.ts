@@ -10,11 +10,15 @@ export class Step {
   getGameId (): number {
     return this.gameId
   }
-  getStartCell (): any {
+  getStartCell (): CellCoordinate {
     return this.from
   }
-  getTargetCell (): any {
+  getTargetCell (): CellCoordinate {
     return this.to
+  }
+
+  isJump (): boolean {
+    return Math.abs(this.from.getNumber() - this.to.getNumber()) > 1
   }
 
 }

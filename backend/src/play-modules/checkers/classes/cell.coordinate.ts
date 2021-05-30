@@ -19,6 +19,10 @@ export class CellCoordinate {
     return this.number
   }
 
+  asString (): string {
+    return `${this.getLetter()}${this.getNumber()}`
+  }
+
   private getLetterFromCoordinate (coordinate: string): string {
     return coordinate.match(/[a-h]/)[0]
   }
