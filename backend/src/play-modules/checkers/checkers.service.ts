@@ -197,7 +197,7 @@ export class CheckersService {
       let findedCell = board.getCellByCoordinates(
         new CellCoordinate(`${letter}${number}`)
       )
-      if (findedCell.hasChecker()) {
+      if (!findedCell.hasChecker()) {
         availableCells.push(findedCell.getCoordinates())
       }
     }
