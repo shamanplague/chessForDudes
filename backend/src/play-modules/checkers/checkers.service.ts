@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Game } from 'src/game-management/game'
 import { CheckersGame } from './checkers-game'
-import { CellCoordinates } from './classes/cell.coordinates'
+import { CellCoordinate } from './classes/cell.coordinate'
 import { Checker } from './classes/checker'
 import CheckersPreset from 'src/play-modules/checkers/classes/data/checkers.preset'
 import { CheckersPlayer } from './classes/checkers-player'
@@ -55,7 +55,7 @@ export class CheckersService {
     return this.games.find(item => +item.getId() === +id)
   }
   
-  async loadBoardPreset (gameId: number, preset: {checker: Checker, coordinates: CellCoordinates}[]) {
+  async loadBoardPreset (gameId: number, preset: {checker: Checker, coordinates: CellCoordinate}[]) {
     let game = await this.findById(gameId)
     preset.forEach(chunk => {
       game.getBoard().getCellByCoordinates(chunk.coordinates).setChecker(chunk.checker)
@@ -120,13 +120,9 @@ export class CheckersService {
 
   async makeMove (userId: number, move: {gameId: number, coordinates: {from: string, to: string}}) {
     console.log('move', move)
-    let fromLabel = move.coordinates.from.match(/[a-h]/)[0]
-    let fromNumber = +move.coordinates.from.match(/[1-8]/)[0]
-    let toLabel = move.coordinates.to.match(/[a-h]/)[0]
-    let toNumber = +move.coordinates.to.match(/[1-8]/)[0]
 
-    let fromCoordinate = new CellCoordinates(fromLabel, fromNumber)
-    let toCoordinate = new CellCoordinates(toLabel, toNumber)
+    let fromCoordinate = new CellCoordinate(move.coordinates.from)
+    let toCoordinate = new CellCoordinate(move.coordinates.to)
 
     let game = await this.findById(move.gameId)
 
@@ -153,7 +149,23 @@ export class CheckersService {
 
   private moveChecker (game: CheckersGame, step: Step): void {
     let checker = game.getBoard().getCellByCoordinates(step.getStartCell()).getChecker()
-    game.getBoard().getCellByCoordinates(step.getTargetCell()).setChecker(checker)
+    let targetCell = game.getBoard().getCellByCoordinates(step.getTargetCell())
+    if (!targetCell) {
+      throw new WsException('Wrong cell for move')
+    }
+    targetCell.setChecker(checker)
     game.getBoard().getCellByCoordinates(step.getStartCell()).removeChecker()
+  }
+
+  async getAvailableMoves (
+    user: User,
+    gameId: number,
+    coordinate: CellCoordinate
+  ): Promise<Array<CellCoordinate>> {
+    console.log('coordinate', coordinate)
+    console.log('user', user)
+    console.log('gameId', gameId)
+
+    return [new CellCoordinate('h1')]
   }
 }

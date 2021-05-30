@@ -25,6 +25,7 @@
 <script>
 
 import _ from 'lodash'
+import ServerEvents from '@/websockets/server-events'
 
 export default {
   props: [ 'usersColorIsWhite' ],
@@ -100,6 +101,8 @@ export default {
       let checkerIsWhite = this.boardState.find(item => item.coordinate === coordinate).checker.isWhite
       if (this.usersColorIsWhite !== checkerIsWhite) return
 
+      this.$emit('getAvailableMoves', coordinate )
+
       this.selectedCheckerCoordinate = coordinate
     },
     makeMove (id) {
@@ -107,9 +110,9 @@ export default {
       if (this.selectedCheckerCoordinate === id) return
 
       this.$emit('makeMove', {
-          from: this.selectedCheckerCoordinate,
-          to: id
-        })
+        from: this.selectedCheckerCoordinate,
+        to: id
+      })
       this.selectedCheckerCoordinate = null
     }
   }

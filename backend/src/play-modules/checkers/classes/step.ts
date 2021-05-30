@@ -1,10 +1,10 @@
-import { CellCoordinates } from "./cell.coordinates"
+import { CellCoordinate } from "./cell.coordinate"
 
 export class Step {
   constructor (
     private gameId: number,
-	  private from: CellCoordinates,
-	  private to: CellCoordinates
+	  private from: CellCoordinate,
+	  private to: CellCoordinate
   ) {}
 
   getGameId (): number {

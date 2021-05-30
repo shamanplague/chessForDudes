@@ -8,6 +8,6 @@ export default {
   DELETE_GAME: 'deleteGame',
   MAKE_MOVE: 'makeMove',
   DEFINE_COLOR: 'defineColor',
-  START_CHECKERS_GAME: 'startCheckersGame',
-  GET_ACTIVE_CHECKERS_GAMES: 'getActiveCheckersGames'
+  GET_ACTIVE_CHECKERS_GAMES: 'getActiveCheckersGames',
+  GET_AVAILABLE_MOVES: 'getAvailableMoves'
 }

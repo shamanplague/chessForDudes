@@ -77,6 +77,9 @@ export const actions = {
 
     commit('refreshActiveGames', [neededGame])
   },
+  SOCKET_getAvailableMoves ({ state, commit }, data) {
+    console.log('Приехали доступные ходы', data)
+  },
   SOCKET_exception  ({ state, commit }, data) {
     data.id = state.backendErrors.length ?
      state.backendErrors[state.backendErrors.length-1].id + 1

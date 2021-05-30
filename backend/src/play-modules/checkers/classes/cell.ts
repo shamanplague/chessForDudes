@@ -1,11 +1,11 @@
-import { CellCoordinates } from './cell.coordinates'
+import { CellCoordinate } from './cell.coordinate'
 import { Checker } from './checker'
 import { NullChecker } from './null.checker'
 
 export class Cell {
   constructor (
     private checker: Checker,
-    private coordinates: CellCoordinates,
+    private coordinates: CellCoordinate,
   ){}
 
   hasChecker (): boolean {
@@ -24,7 +24,7 @@ export class Cell {
   removeChecker () {
     this.checker = new NullChecker()
   }
-  getCoordinates (): CellCoordinates {
+  getCoordinates (): CellCoordinate {
     return this.coordinates
   }
 }

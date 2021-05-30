@@ -9,6 +9,7 @@
       <Board  v-if="activeGame"
               :usersColorIsWhite.sync="activeGame.usersColorIsWhite"
               @makeMove="makeMove($event)" 
+              @getAvailableMoves="getAvailableMoves($event)" 
       />
     </div>
 
@@ -52,6 +53,12 @@ export default {
       this.$socket.emit(ServerEvents.MAKE_MOVE, {
         gameId: this.gameId,
         coordinates
+      })
+    },
+    getAvailableMoves (coordinate) {
+      this.$socket.emit(ServerEvents.GET_AVAILABLE_MOVES, {
+        gameId: this.gameId,
+        coordinate
       })
     }
   }

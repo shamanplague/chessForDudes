@@ -5,6 +5,7 @@ import ClientsEvents from 'src/websockets/client.events'
 import { UserToken } from 'src/decorators/user-token.decorator'
 import { UsersService } from 'src/users/users.service'
 import { CheckersService } from 'src/play-modules/checkers/checkers.service'
+import { CellCoordinate } from './classes/cell.coordinate'
 
 @WebSocketGateway()
 export class CheckersGateway {
@@ -21,7 +22,6 @@ export class CheckersGateway {
     @ConnectedSocket() client: Socket,
     @UserToken() userToken: string
   ): Promise<void> {
-    console.log('handleGetActiveGames method')
     let user = await this.UsersService.findByToken(userToken)
     let games = this.CheckersService
     .getAllActiveGamesForUser(user)
@@ -52,7 +52,6 @@ export class CheckersGateway {
     @UserToken() userToken: string
   ): Promise<void> {
     let user = await this.UsersService.findByToken(userToken)
-    let currentUserSocketId = user.getSocketId()
 
     if (!/^[a-h][1-8]$/.test(payload.coordinates.from) 
         || !/^[a-h][1-8]$/.test(payload.coordinates.to)) {
@@ -62,22 +61,26 @@ export class CheckersGateway {
     await this.CheckersService.makeMove(user.getId(), payload)
     let game = await this.CheckersService.findById(payload.gameId)
 
-    // this.server.to(`${payload.gameId}`).emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
-    this.server.emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
-      { game: await this.CheckersService.getFormattedGame(game) }
+    this.server.to(`${payload.gameId}`).emit(ClientsEvents.GET_ACTUAL_GAME_STATE,
+      { game: this.CheckersService.getFormattedGame(game) }
     )
+  }
 
-    // let neededSocketId = game.getPlayers()
-    // .find(item => item.isCheckersColorWhite() === game.isNowWhiteMove()).getSocketId()
+  @SubscribeMessage(ServerEvents.GET_AVAILABLE_MOVES)
+  async handleGetAvailableMoves(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { gameId: number, coordinate: string },
+    @UserToken() userToken: string
+  ): Promise<void> {
+    let user = await this.UsersService.findByToken(userToken)
 
-    // this.server.sockets.sockets[neededSocketId]
-    // .emit(ClientsEvents.BACKGROUND_NOTIFICATION_FROM_SERVER, { message: 'YOUR_MOVE' })
+    let cell = new CellCoordinate(payload.coordinate)
+    
+    let availableMoves = await this.CheckersService
+    .getAvailableMoves(user, payload.gameId , cell)
 
-
-
-    // this.server.sockets.sockets[currentUserSocketId]
-    // .emit(ClientsEvents.BACKGROUND_NOTIFICATION_FROM_SERVER,
-    //   { message : 'MOVE_CONFIRMED' }
-    // )
+    client.emit(ClientsEvents.GET_AVAILABLE_MOVES, {
+      moves: availableMoves.map(item => `${item.getLetter()}${item.getNumber()}`)
+    })
   }
 }

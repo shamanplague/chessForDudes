@@ -1,59 +1,59 @@
 import { Cell } from "./cell";
-import { CellCoordinates } from "./cell.coordinates";
+import { CellCoordinate } from "./cell.coordinate";
 import { Checker } from "./checker";
 import { NullChecker } from "./null.checker";
 
 export class Board {
   private cells: Array<Cell> = [
-    new Cell(new NullChecker, new CellCoordinates('a', 1)),
-    new Cell(new NullChecker, new CellCoordinates('c', 1)),
-    new Cell(new NullChecker, new CellCoordinates('e', 1)),
-    new Cell(new NullChecker, new CellCoordinates('g', 1)),
+    new Cell(new NullChecker, new CellCoordinate('a1')),
+    new Cell(new NullChecker, new CellCoordinate('c1')),
+    new Cell(new NullChecker, new CellCoordinate('e1')),
+    new Cell(new NullChecker, new CellCoordinate('g1')),
 
-    new Cell(new NullChecker, new CellCoordinates('b', 2)),
-    new Cell(new NullChecker, new CellCoordinates('d', 2)),
-    new Cell(new NullChecker, new CellCoordinates('f', 2)),
-    new Cell(new NullChecker, new CellCoordinates('h', 2)),
+    new Cell(new NullChecker, new CellCoordinate('b2')),
+    new Cell(new NullChecker, new CellCoordinate('d2')),
+    new Cell(new NullChecker, new CellCoordinate('f2')),
+    new Cell(new NullChecker, new CellCoordinate('h2')),
 
-    new Cell(new NullChecker, new CellCoordinates('a', 3)),
-    new Cell(new NullChecker, new CellCoordinates('c', 3)),
-    new Cell(new NullChecker, new CellCoordinates('e', 3)),
-    new Cell(new NullChecker, new CellCoordinates('g', 3)),
+    new Cell(new NullChecker, new CellCoordinate('a3')),
+    new Cell(new NullChecker, new CellCoordinate('c3')),
+    new Cell(new NullChecker, new CellCoordinate('e3')),
+    new Cell(new NullChecker, new CellCoordinate('g3')),
 
-    new Cell(new NullChecker, new CellCoordinates('b', 4)),
-    new Cell(new NullChecker, new CellCoordinates('d', 4)),
-    new Cell(new NullChecker, new CellCoordinates('f', 4)),
-    new Cell(new NullChecker, new CellCoordinates('h', 4)),
+    new Cell(new NullChecker, new CellCoordinate('b4')),
+    new Cell(new NullChecker, new CellCoordinate('d4')),
+    new Cell(new NullChecker, new CellCoordinate('f4')),
+    new Cell(new NullChecker, new CellCoordinate('h4')),
     
-    new Cell(new NullChecker, new CellCoordinates('a', 5)),
-    new Cell(new NullChecker, new CellCoordinates('c', 5)),
-    new Cell(new NullChecker, new CellCoordinates('e', 5)),
-    new Cell(new NullChecker, new CellCoordinates('g', 5)),
+    new Cell(new NullChecker, new CellCoordinate('a5')),
+    new Cell(new NullChecker, new CellCoordinate('c5')),
+    new Cell(new NullChecker, new CellCoordinate('e5')),
+    new Cell(new NullChecker, new CellCoordinate('g5')),
 
-    new Cell(new NullChecker, new CellCoordinates('b', 6)),
-    new Cell(new NullChecker, new CellCoordinates('d', 6)),
-    new Cell(new NullChecker, new CellCoordinates('f', 6)),
-    new Cell(new NullChecker, new CellCoordinates('h', 6)),
+    new Cell(new NullChecker, new CellCoordinate('b6')),
+    new Cell(new NullChecker, new CellCoordinate('d6')),
+    new Cell(new NullChecker, new CellCoordinate('f6')),
+    new Cell(new NullChecker, new CellCoordinate('h6')),
     
-    new Cell(new NullChecker, new CellCoordinates('a', 7)),
-    new Cell(new NullChecker, new CellCoordinates('c', 7)),
-    new Cell(new NullChecker, new CellCoordinates('e', 7)),
-    new Cell(new NullChecker, new CellCoordinates('g', 7)),
+    new Cell(new NullChecker, new CellCoordinate('a7')),
+    new Cell(new NullChecker, new CellCoordinate('c7')),
+    new Cell(new NullChecker, new CellCoordinate('e7')),
+    new Cell(new NullChecker, new CellCoordinate('g7')),
     
-    new Cell(new NullChecker, new CellCoordinates('b', 8)),
-    new Cell(new NullChecker, new CellCoordinates('d', 8)),
-    new Cell(new NullChecker, new CellCoordinates('f', 8)),
-    new Cell(new NullChecker, new CellCoordinates('h', 8)),
+    new Cell(new NullChecker, new CellCoordinate('b8')),
+    new Cell(new NullChecker, new CellCoordinate('d8')),
+    new Cell(new NullChecker, new CellCoordinate('f8')),
+    new Cell(new NullChecker, new CellCoordinate('h8')),
   ]
 
   getCells (): Array<Cell> {
     return this.cells
   }
-  setChecker(checker: Checker, coordinates: CellCoordinates): void {
+  setChecker(checker: Checker, coordinates: CellCoordinate): void {
     // console.log('Закидываем шашку', checker)
     this.getCellByCoordinates(coordinates).setChecker(checker)
   }
-  getCellByCoordinates (coordinates: CellCoordinates): Cell {
+  getCellByCoordinates (coordinates: CellCoordinate): Cell {
     return this.cells.find(item => {
       let itemCoordinates = item.getCoordinates()
       return itemCoordinates.getLetter() === coordinates.getLetter()

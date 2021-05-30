@@ -9,5 +9,6 @@ export default {
   PLAYERS_CURRENT_GAMES: 'playersCurrentGames',
   DEFINE_COLOR: 'defineColor',
   GET_ACTUAL_GAME_STATE: 'actualGameState',
-  GET_ACTIVE_CHECKERS_GAMES: 'activeGames'
+  GET_ACTIVE_CHECKERS_GAMES: 'activeGames',
+  GET_AVAILABLE_MOVES: 'getAvailableMoves'
 }
