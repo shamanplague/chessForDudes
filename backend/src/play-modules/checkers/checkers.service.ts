@@ -244,39 +244,75 @@ export class CheckersService {
       tryAddCell(getNextChar(coordinate.getLetter()), neededNumber)
     }
 
-    let tryAddJump = (isHorizontalRight: boolean, isVerticalUp: boolean): void => {
+    let tryAddCells = (isHorizontalRight: boolean, isVerticalUp: boolean): void => {
+      
+      // let opponentsCheckerFound
+      let checkerFound: boolean
+      let ownCheckerFound: boolean
+      let numberOfIteration: number = 0
+      let isMoveBack: boolean = currentChecker.isWhite() ? !isVerticalUp : isVerticalUp
+
+      let maxAvailableStepsReached = (cell: CellCoordinate) => {
+        let maxLetter = isVerticalUp ? game.getBoard().getMaxLetter() : game.getBoard().getMinLetter()
+        let maxNumber = isVerticalUp ? game.getBoard().getMaxNumber() : game.getBoard().getMinNumber()
+      
+        if (currentChecker.isKing()) {
+          return cell.getNumber() === maxNumber || cell.getLetter() === maxLetter
+        } else {
+          return numberOfIteration === 2
+        }
+      }
+      
       let numberFunc = isVerticalUp ? getNextNumber : getPrevNumber
       let charFunc = isHorizontalRight ? getNextChar : getPrevChar
 
-      let nearLetter = charFunc(coordinate.getLetter())
-      let letter = nearLetter ? charFunc(nearLetter) : null
-      let nearNumber = numberFunc(coordinate.getNumber())
-      let number = nearNumber ? numberFunc(nearNumber) : null
+      let addNextCell = (cell: CellCoordinate) => {
+        let nextCellLetter = charFunc(cell.getLetter())
+        let nextCellNumber = numberFunc(cell.getNumber())
 
-      if (!letter || !number) return
+        if (!nextCellLetter || !nextCellNumber) return
 
-      let nearChecker = game
-      .getBoard()
-      .getCellByCoordinates(new CellCoordinate(`${nearLetter}${nearNumber}`))
-      .getChecker()
+        let foundCell = game.getBoard().getCellByCoordinates(
+          new CellCoordinate(`${nextCellLetter}${nextCellNumber}`)
+        )
 
-      let isOpponentsChecker = (!nearChecker.isNull() &&
-      nearChecker.isWhite() !== currentChecker.isWhite())
-      if (letter && number && isOpponentsChecker) {
-      // if (rightUpLetter && rightUpNumber) {
-        tryAddCell(letter, number)
+        numberOfIteration++
+
+        if (!foundCell.hasChecker()) {
+          if (currentChecker.isKing() || (!currentChecker.isKing() && !isMoveBack)) {
+            availableCells.push(foundCell.getCoordinates())
+          }
+        } else {
+          checkerFound = true
+          ownCheckerFound = !foundCell.getChecker().isNull() &&
+          foundCell.getChecker().isWhite() === currentChecker.isWhite()
+        }
+
+        let maxReached = maxAvailableStepsReached(foundCell.getCoordinates())
+        let continueCounting = currentChecker.isKing() ?
+        !maxReached && !ownCheckerFound
+        :
+        !maxReached && checkerFound && !ownCheckerFound
+
+        if (continueCounting) {
+          addNextCell(foundCell.getCoordinates())
+        }
+
       }
+
+      addNextCell(coordinate)
+
     }
 
-    tryAddJump(true, true)
-    tryAddJump(true, false)
-    tryAddJump(false, false)
-    tryAddJump(false, true)
+    tryAddCells(true, true)
+    tryAddCells(true, false)
+    tryAddCells(false, false)
+    tryAddCells(false, true)
 
     return availableCells
   }
 
-  private takeFigure (game: CheckersGame, coordinate: CellCoordinate) {
+  private takeFigure (game: CheckersGame, coordinate: CellCoordinate) {//todo смотреть сколько было убито
     game.getBoard().getCellByCoordinates(coordinate).removeChecker()
   }
 

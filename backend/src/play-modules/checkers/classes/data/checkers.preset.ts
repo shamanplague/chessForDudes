@@ -3,6 +3,13 @@ import { Checker } from '../checker'
 
 export default (() => {
   return [
+    // {checker: new Checker(true), coordinates: new CellCoordinate('g7')},
+    // {checker: new Checker(true), coordinates: new CellCoordinate('d4')},
+    // {checker: new Checker(false), coordinates: new CellCoordinate('a7')},
+    // {checker: new Checker(true), coordinates: new CellCoordinate('c1')},
+    // {checker: new Checker(false), coordinates: new CellCoordinate('b2')},
+    // {checker: new Checker(false), coordinates: new CellCoordinate('d2')},
+
     {checker: new Checker(true), coordinates: new CellCoordinate('a1')},
     {checker: new Checker(true), coordinates: new CellCoordinate('c1')},
     {checker: new Checker(true), coordinates: new CellCoordinate('e1')},
