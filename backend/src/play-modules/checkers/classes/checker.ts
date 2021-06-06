@@ -1,6 +1,6 @@
 export class Checker {
-  private _isKing: boolean = true
-  // private _isKing: boolean = false
+  // private _isKing: boolean = true
+  private _isKing: boolean = false
   
   constructor (
     private _isWhite: boolean

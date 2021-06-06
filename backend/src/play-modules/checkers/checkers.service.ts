@@ -168,6 +168,8 @@ export class CheckersService {
         game.passMove()
       }
 
+    } else {
+      game.passMove()
     }
 
     let currentChecker = game
@@ -298,9 +300,6 @@ export class CheckersService {
                 foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
               ) === 1
 
-              // console.log('foundCell', foundCell)
-              // console.log('isNearCell', isNearCell)
-
               if (isNearCell) {
                 continueCounting = false
               } else {
@@ -310,9 +309,6 @@ export class CheckersService {
             } else {
               let isMyChecker = foundCell.getChecker().isWhite() === currentChecker.isWhite()
 
-              // console.log('foundCell', foundCell)
-              // console.log('isMyChecker', isMyChecker)
-
               if (isMyChecker) {
                 continueCounting = false
               } else {
@@ -321,8 +317,20 @@ export class CheckersService {
               }
             }
           } else {
-            if (foundCellsWithCheckers[0].getChecker().isWhite() === currentChecker.isWhite()) {
-              continueCounting = false
+            if (foundCellsWithCheckers.length) {
+              let nearCell = Math.abs(
+                foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
+              ) === 1
+              if (nearCell) {
+                availableMovesForDirection = []
+              }
+            } else {
+              if (foundCell.getChecker().isWhite() === currentChecker.isWhite()) {
+                continueCounting = false
+              } else {
+                availableMovesForDirection.push(foundCell.getCoordinates())
+                foundCellsWithCheckers.unshift(foundCell)
+              }
             }
           }
         }
@@ -346,6 +354,7 @@ export class CheckersService {
     tryAddCells(false, false)
     tryAddCells(false, true)
 
+    // let movesWithTakes = []
     let movesWithTakes = availableCells.filter(cellCoordinatesChunk => {
       return cellCoordinatesChunk.some(cell => {
         let checker = game.getBoard().getCellByCoordinates(cell).getChecker()
@@ -360,6 +369,7 @@ export class CheckersService {
     let filteredresultArray = resultArray.map(chunk => 
         chunk.filter(cell =>
         game.getBoard().getCellByCoordinates(cell).getChecker().isNull()
+        // true
       )
     )
 
