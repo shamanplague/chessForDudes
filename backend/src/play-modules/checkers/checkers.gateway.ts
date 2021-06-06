@@ -66,8 +66,6 @@ export class CheckersGateway {
 
     if (winner) {
       this.server.to(`${payload.gameId}`).emit(ClientsEvents.NOTIFICATION_FROM_SERVER, { message: `Победитель ${winner.getUsername()}` })
-    } else {
-      game.passMove()
     }
 
     this.server.to(`${payload.gameId}`).emit(ClientsEvents.GET_ACTUAL_GAME_STATE,

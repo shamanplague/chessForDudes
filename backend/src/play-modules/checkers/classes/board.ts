@@ -61,19 +61,19 @@ export class Board {
     })
   }
 
-  getMaxNumber (): number {
+  static getMaxNumber (): number {
     return 8
   }
 
-  getMinNumber (): number {
+  static getMinNumber (): number {
     return 1
   }
   
-  getMaxLetter (): string {
+  static getMaxLetter (): string {
     return 'h'
   }
 
-  getMinLetter (): string {
+  static getMinLetter (): string {
     return 'a'
   }
 }
