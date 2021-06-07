@@ -62,7 +62,7 @@ export class CheckersService {
     let user = await this.UsersService.findByToken(userToken)
     let game = await this.findGameById(gameId)
 
-    //todo проверить, не левый ли хуй стучится
+    //todo проверить, не левый ли юзер стучится
 
     return game.getPlayers()
     .find(item => item.getId() === user.getId())
@@ -107,69 +107,65 @@ export class CheckersService {
       return res
     })
 
+    object.longMove = {
+      inProgress: game.isLongMoveNow(),
+      startCell: game.getLongMoveStartCellCoordinate() ? game.getLongMoveStartCellCoordinate().asString() : 'none',
+      moves: game.getLongMoveSteps().map(step => step.getTargetCell().asString()),
+      checkersForTaking: game.getLongMoveCheckersForTaking().map(item => item.asString())
+    }
+
     return object
   }
 
-  async makeMove (userId: number, move: {gameId: number, coordinates: {from: string, to: string}}) {
+  getArrayOfJumpedCells = (game: CheckersGame, step: Step): Array<Cell> => {
 
-    let fromCoordinate = new CellCoordinate(move.coordinates.from)
-    let toCoordinate = new CellCoordinate(move.coordinates.to)
+    // console.log('step', step)
+    let goUp = step.getStartCell().getNumber() < step.getTargetCell().getNumber()
+    let goRight = step.getStartCell().getLetter().charAt(0) < step.getTargetCell().getLetter().charAt(0)
 
-    let game = await this.findGameById(move.gameId)
+    let numberFunc = goUp ? this.getNextNumber : this.getPrevNumber
+    let charFunc = goRight ? this.getNextChar : this.getPrevChar
+
+    let arrayOfCells: Array<Cell> = []
+
+    let addNextCell = (coordinate: CellCoordinate): void => {
+      let neededCellLetter = charFunc(coordinate.getLetter())
+      let neededCellNumber = numberFunc(coordinate.getNumber())
+      let nextCell = game.getBoard()
+      .getCellByCoordinates(new CellCoordinate(
+        `${neededCellLetter}${neededCellNumber}`
+      ))
+
+      arrayOfCells.push(nextCell)
+      
+      if (numberFunc(neededCellNumber) !== step.getTargetCell().getNumber()) {
+        addNextCell(nextCell.getCoordinates())
+      }
+    }
+
+    addNextCell(step.getStartCell())
+
+    return arrayOfCells
+  }
+
+  async makeMove (userId: number, step: Step) {//todo передавать сущности
+
+    let game = await this.findGameById(step.getGameId())
 
     let player = game.getCheckersPlayerById(userId)
 
-    let step = new Step(move.gameId, fromCoordinate, toCoordinate)
-
-    await this.validateMove(game, player, step)
+    // await this.validateMove(game, player, step)
 
     this.moveChecker(game, step)
 
     if (step.isJump()) {
 
-      let getArrayOfJumpedCells = (step: Step): Array<Cell> => {
-        let goUp = step.getStartCell().getNumber() < step.getTargetCell().getNumber()
-        let goRight = step.getStartCell().getLetter().charAt(0) < step.getTargetCell().getLetter().charAt(0)
-
-        let numberFunc = goUp ? this.getNextNumber : this.getPrevNumber
-        let charFunc = goRight ? this.getNextChar : this.getPrevChar
-
-        let arrayOfCells: Array<Cell> = []
-
-        let addNextCell = (coordinate: CellCoordinate): void => {
-          let neededCellLetter = charFunc(coordinate.getLetter())
-          let neededCellNumber = numberFunc(coordinate.getNumber())
-          let nextCell = game
-          .getBoard()
-          .getCellByCoordinates(new CellCoordinate(
-            `${neededCellLetter}${neededCellNumber}`
-          ))
-
-          arrayOfCells.push(nextCell)
-          
-          if (numberFunc(neededCellNumber) !== step.getTargetCell().getNumber()) {
-            addNextCell(nextCell.getCoordinates())
-          }
-        }
-
-        addNextCell(step.getStartCell())
-
-        return arrayOfCells
-      }
-
-      let checkersForTaking = getArrayOfJumpedCells(step)
+      let checkersForTaking = this.getArrayOfJumpedCells(game, step)
       .filter(item => item.hasChecker())
 
       checkersForTaking.forEach(item => {
         this.takeFigure(game, item.getCoordinates())
       })
-
-      if (!checkersForTaking.length) {
-        game.passMove()
-      }
-
-    } else {
-      game.passMove()
     }
 
     let currentChecker = game
@@ -186,10 +182,13 @@ export class CheckersService {
     }
   }
 
-  private async validateMove ( game: CheckersGame, player: CheckersPlayer, step: Step ): Promise<void> {
+  async validateMove (
+    checker: Checker,
+    game: CheckersGame,
+    player: CheckersPlayer,
+    step: Step
+  ): Promise<void> {
 
-    let checker = game.getBoard().getCellByCoordinates(step.getStartCell()).getChecker()
-    
     if (player.isCheckersColorWhite() !== game.isNowWhiteMove()) {
       throw new WsException('Is not your move')
     }
@@ -199,6 +198,7 @@ export class CheckersService {
     }
 
     let isAvailableMove = this.getAvailableMoves(
+      checker,
       game,
       step.getStartCell()
     )
@@ -238,121 +238,172 @@ export class CheckersService {
     return number - 1 < Board.getMinNumber() ? null : number - 1
   }
 
+  private tryAddCells = (
+    currentChecker: Checker,
+    coordinate: CellCoordinate,
+    game: CheckersGame,
+    isHorizontalRight: boolean,
+    isVerticalUp: boolean
+    ): Array<CellCoordinate> => {
+
+    let availableMovesForDirection: Array<CellCoordinate> = []
+    let foundCellsWithCheckers: Array<Cell> = []
+    let numberOfIteration: number = 0
+    let isMoveBack: boolean = currentChecker.isWhite() ? !isVerticalUp : isVerticalUp
+
+    let maxAvailableStepsReached = (cell: CellCoordinate) => {
+      let maxLetter = isVerticalUp ? Board.getMaxLetter() : Board.getMinLetter()
+      let maxNumber = isVerticalUp ? Board.getMaxNumber() : Board.getMinNumber()
+    
+      if (currentChecker.isKing()) {
+        return cell.getNumber() === maxNumber || cell.getLetter() === maxLetter
+      } else {
+        return numberOfIteration === 2
+      }
+    }
+    
+    let numberFunc = isVerticalUp ? this.getNextNumber : this.getPrevNumber
+    let charFunc = isHorizontalRight ? this.getNextChar : this.getPrevChar
+
+    let addNextCell = (cell: CellCoordinate) => {
+      let nextCellLetter = charFunc(cell.getLetter())
+      let nextCellNumber = numberFunc(cell.getNumber())
+
+      if (!nextCellLetter || !nextCellNumber) return
+
+      let foundCell = game.getBoard().getCellByCoordinates(
+        new CellCoordinate(`${nextCellLetter}${nextCellNumber}`)
+      )
+
+      numberOfIteration++
+      let continueCounting: boolean = true
+
+      if (!foundCell.hasChecker()) {
+        let isJump = Math.abs(coordinate.getNumber() - foundCell.getCoordinates().getNumber()) > 1
+        let validMoveBack = !isMoveBack || (isMoveBack && isJump)
+        if (currentChecker.isKing() || (!currentChecker.isKing() && validMoveBack)) {
+          availableMovesForDirection.push(foundCell.getCoordinates())
+        }
+
+        if (!currentChecker.isKing()) {
+          continueCounting = false
+        }
+      } else {
+        
+        if (currentChecker.isKing()) {
+          if (foundCellsWithCheckers.length) {
+            let isNearCell = 
+            Math.abs(
+              foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
+            ) === 1
+
+            if (isNearCell) {
+              continueCounting = false
+            } else {
+              availableMovesForDirection.push(foundCell.getCoordinates())
+              foundCellsWithCheckers.unshift(foundCell)
+            }
+          } else {
+            let isMyChecker = foundCell.getChecker().isWhite() === currentChecker.isWhite()
+
+            if (isMyChecker) {
+              continueCounting = false
+            } else {
+              availableMovesForDirection.push(foundCell.getCoordinates())
+              foundCellsWithCheckers.unshift(foundCell)
+            }
+          }
+        } else {
+          if (foundCellsWithCheckers.length) {
+            let nearCell = Math.abs(
+              foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
+            ) === 1
+            if (nearCell) {
+              availableMovesForDirection = []
+            }
+          } else {
+            if (foundCell.getChecker().isWhite() === currentChecker.isWhite()) {
+              continueCounting = false
+            } else {
+              availableMovesForDirection.push(foundCell.getCoordinates())
+              foundCellsWithCheckers.unshift(foundCell)
+            }
+          }
+        }
+      }
+
+      let maxReached = maxAvailableStepsReached(foundCell.getCoordinates())
+
+      if (!maxReached && continueCounting) {
+        addNextCell(foundCell.getCoordinates())
+      }
+
+    }
+
+    addNextCell(coordinate)
+
+    return availableMovesForDirection
+
+  }
+
+  hasNeedToTakeFigure (currentChecker: Checker, game: CheckersGame, step: Step): boolean {
+
+    let availableCells: Array<Array<CellCoordinate>> = []
+
+    availableCells
+    .push(this.tryAddCells(currentChecker, step.getTargetCell(), game, true, true))
+    availableCells
+    .push(this.tryAddCells(currentChecker, step.getTargetCell(), game, true, false))
+    availableCells
+    .push(this.tryAddCells(currentChecker, step.getTargetCell(), game, false, false))
+    availableCells
+    .push(this.tryAddCells(currentChecker, step.getTargetCell(), game, false, true))
+
+    let checkersForTake: Array<CellCoordinate> = []
+    
+    availableCells.forEach(cellCoordinatesChunk => {
+      cellCoordinatesChunk.forEach(cell => {
+        let checker = game.getBoard().getCellByCoordinates(cell).getChecker()
+        if (!checker.isNull() 
+            && checker.isWhite() !== currentChecker.isWhite()
+            && cellCoordinatesChunk.indexOf(cell) !== cellCoordinatesChunk.length - 1
+        ) {
+          checkersForTake.push(cell)
+        }
+      })
+    })
+
+    console.log('С тейками', checkersForTake)
+
+    if (game.isLongMoveNow()) {
+      checkersForTake = checkersForTake
+      .filter(
+        item => !game.getLongMoveCheckersForTaking()
+        .map(item => item.asString())
+        .includes(item.asString())
+      )
+    }
+
+    console.log('битые', game.getLongMoveCheckersForTaking()
+    .map(item => item.asString()))
+
+    console.log('После фильтрации', checkersForTake)
+
+    return Boolean(checkersForTake.length)
+  }
+
   getAvailableMoves (
+    currentChecker: Checker,
     game: CheckersGame,
     coordinate: CellCoordinate
   ): Array<CellCoordinate> {
 
     let availableCells: Array<Array<CellCoordinate>> = []
 
-    let currentChecker = game.getBoard().getCellByCoordinates(coordinate).getChecker()
-
-    let tryAddCells = (isHorizontalRight: boolean, isVerticalUp: boolean): void => {
-
-      let availableMovesForDirection: Array<CellCoordinate> = []
-      let foundCellsWithCheckers: Array<Cell> = []
-      let numberOfIteration: number = 0
-      let isMoveBack: boolean = currentChecker.isWhite() ? !isVerticalUp : isVerticalUp
-
-      let maxAvailableStepsReached = (cell: CellCoordinate) => {
-        let maxLetter = isVerticalUp ? Board.getMaxLetter() : Board.getMinLetter()
-        let maxNumber = isVerticalUp ? Board.getMaxNumber() : Board.getMinNumber()
-      
-        if (currentChecker.isKing()) {
-          return cell.getNumber() === maxNumber || cell.getLetter() === maxLetter
-        } else {
-          return numberOfIteration === 2
-        }
-      }
-      
-      let numberFunc = isVerticalUp ? this.getNextNumber : this.getPrevNumber
-      let charFunc = isHorizontalRight ? this.getNextChar : this.getPrevChar
-
-      let addNextCell = (cell: CellCoordinate) => {
-        let nextCellLetter = charFunc(cell.getLetter())
-        let nextCellNumber = numberFunc(cell.getNumber())
-
-        if (!nextCellLetter || !nextCellNumber) return
-
-        let foundCell = game.getBoard().getCellByCoordinates(
-          new CellCoordinate(`${nextCellLetter}${nextCellNumber}`)
-        )
-
-        numberOfIteration++
-        let continueCounting: boolean = true
-
-        if (!foundCell.hasChecker()) {
-          let isJump = Math.abs(coordinate.getNumber() - foundCell.getCoordinates().getNumber()) > 1
-          let validMoveBack = !isMoveBack || (isMoveBack && isJump)
-          if (currentChecker.isKing() || (!currentChecker.isKing() && validMoveBack)) {
-            availableMovesForDirection.push(foundCell.getCoordinates())
-          }
-
-          if (!currentChecker.isKing()) {
-            continueCounting = false
-          }
-        } else {
-          
-          if (currentChecker.isKing()) {
-            if (foundCellsWithCheckers.length) {
-              let isNearCell = 
-              Math.abs(
-                foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
-              ) === 1
-
-              if (isNearCell) {
-                continueCounting = false
-              } else {
-                availableMovesForDirection.push(foundCell.getCoordinates())
-                foundCellsWithCheckers.unshift(foundCell)
-              }
-            } else {
-              let isMyChecker = foundCell.getChecker().isWhite() === currentChecker.isWhite()
-
-              if (isMyChecker) {
-                continueCounting = false
-              } else {
-                availableMovesForDirection.push(foundCell.getCoordinates())
-                foundCellsWithCheckers.unshift(foundCell)
-              }
-            }
-          } else {
-            if (foundCellsWithCheckers.length) {
-              let nearCell = Math.abs(
-                foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
-              ) === 1
-              if (nearCell) {
-                availableMovesForDirection = []
-              }
-            } else {
-              if (foundCell.getChecker().isWhite() === currentChecker.isWhite()) {
-                continueCounting = false
-              } else {
-                availableMovesForDirection.push(foundCell.getCoordinates())
-                foundCellsWithCheckers.unshift(foundCell)
-              }
-            }
-          }
-        }
-
-        let maxReached = maxAvailableStepsReached(foundCell.getCoordinates())
-
-        if (!maxReached && continueCounting) {
-          addNextCell(foundCell.getCoordinates())
-        }
-
-      }
-
-      addNextCell(coordinate)
-
-      availableCells.push(availableMovesForDirection)
-
-    }
-
-    tryAddCells(true, true)
-    tryAddCells(true, false)
-    tryAddCells(false, false)
-    tryAddCells(false, true)
+    availableCells.push(this.tryAddCells(currentChecker, coordinate, game, true, true))
+    availableCells.push(this.tryAddCells(currentChecker, coordinate, game, true, false))
+    availableCells.push(this.tryAddCells(currentChecker, coordinate, game, false, false))
+    availableCells.push(this.tryAddCells(currentChecker, coordinate, game, false, true))
 
     // let movesWithTakes = []
     let movesWithTakes = availableCells.filter(cellCoordinatesChunk => {
@@ -364,16 +415,33 @@ export class CheckersService {
       })
     })
 
-    let resultArray = movesWithTakes.length ? movesWithTakes : availableCells
+    if (game.isLongMoveNow()) {
+      movesWithTakes = movesWithTakes.filter(cellCoordinatesChunk => {
+        let intersection = _.intersection(cellCoordinatesChunk, game.getLongMoveCheckersForTaking())
+        return !intersection.length
+      })
+    }
 
-    let filteredresultArray = resultArray.map(chunk => 
+    // console.log('movesWithTakes', movesWithTakes)
+
+    let resultArray = []
+  
+    if (game.isLongMoveNow()) {
+      resultArray = movesWithTakes
+    } else {
+      resultArray = movesWithTakes.length ? movesWithTakes : availableCells
+    }
+
+    // console.log('Итого уходит', resultArray)
+
+    let filteredResultArray = resultArray.map(chunk => 
         chunk.filter(cell =>
         game.getBoard().getCellByCoordinates(cell).getChecker().isNull()
         // true
       )
     )
 
-    return _.flattenDeep(filteredresultArray)
+    return _.flattenDeep(filteredResultArray)
   }
 
   private takeFigure (game: CheckersGame, coordinate: CellCoordinate) {//todo смотреть сколько было убито
@@ -400,7 +468,13 @@ export class CheckersService {
       let userHasMoves = false
 
       for (let cell of cellsWithPlayersCheckers) {
-        if (this.getAvailableMoves(game, cell.getCoordinates()).length) {
+        if (
+          this.getAvailableMoves(
+            game.getBoard().getCellByCoordinates(cell.getCoordinates()).getChecker(),
+            game,
+            cell.getCoordinates()
+          ).length
+        ) {
           userHasMoves = true
           break
         }

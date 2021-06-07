@@ -107,7 +107,7 @@ export default {
         from: this.selectedCheckerCoordinate,
         to: id
       })
-      this.selectedCheckerCoordinate = null
+      // this.selectedCheckerCoordinate = null
     }
   }
 }

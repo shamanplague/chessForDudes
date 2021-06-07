@@ -49,7 +49,7 @@ export default {
       // if (this.$store.state.activeGames[0]) {
       //   console.log('activeGame.usersColorIsWhite', this.$store.state.activeGames[0].usersColorIsWhite)
       // }
-      
+      console.log('Текущая игра', this.$store.state.activeGames.find(item => item.gameId === this.gameId))
       return this.$store.state.activeGames.find(item => item.gameId === this.gameId)
     },
     isMyMove () {
@@ -60,6 +60,11 @@ export default {
   methods : {
     makeMove (coordinates) {
       this.availableMoves = []
+      
+      if (this.activeGame.longMove.inProgress) {
+        coordinates.from = this.activeGame.longMove.moves[this.activeGame.longMove.moves.length - 1]
+      }
+      
       this.$socket.emit(ServerEvents.MAKE_MOVE, {
         gameId: this.gameId,
         coordinates
