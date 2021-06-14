@@ -46,9 +46,13 @@ export class CheckersService {
     return this.games.find(item => +item.getId() === +id)
   }
   
-  async loadBoardPreset (gameId: number, preset: {checker: Checker, coordinates: CellCoordinate}[]) {
+  async loadBoardPreset (gameId: number, preset: Array<{checker: Checker, coordinates: CellCoordinate}>) {
     let game = await this.findGameById(gameId)
-    preset.forEach(chunk => {
+
+    let clonedPreset = _.cloneDeep(preset)
+
+    clonedPreset
+    .forEach(chunk => {
       let neededCell = game.getBoard().getCellByCoordinates(chunk.coordinates)
       if (neededCell) {
         neededCell.setChecker(chunk.checker) 
@@ -119,6 +123,8 @@ export class CheckersService {
 
   getArrayOfJumpedCells = (game: CheckersGame, step: Step): Array<Cell> => {
 
+    if (!step.isJump()) return []
+
     // console.log('step', step)
     let goUp = step.getStartCell().getNumber() < step.getTargetCell().getNumber()
     let goRight = step.getStartCell().getLetter().charAt(0) < step.getTargetCell().getLetter().charAt(0)
@@ -148,13 +154,7 @@ export class CheckersService {
     return arrayOfCells
   }
 
-  async makeMove (userId: number, step: Step) {//todo передавать сущности
-
-    let game = await this.findGameById(step.getGameId())
-
-    let player = game.getCheckersPlayerById(userId)
-
-    // await this.validateMove(game, player, step)
+  async makeMove (game: CheckersGame, step: Step) {
 
     this.moveChecker(game, step)
 
@@ -166,19 +166,6 @@ export class CheckersService {
       checkersForTaking.forEach(item => {
         this.takeFigure(game, item.getCoordinates())
       })
-    }
-
-    let currentChecker = game
-    .getBoard()
-    .getCellByCoordinates(step.getTargetCell())
-    .getChecker()
-
-    let isCheckerBecameKing = 
-    (player.isCheckersColorWhite() && step.getTargetCell().getNumber() === Board.getMaxNumber())
-    || (!player.isCheckersColorWhite() && step.getTargetCell().getNumber() === Board.getMinNumber())
-
-    if (isCheckerBecameKing && !currentChecker.isKing()) {
-      currentChecker.makeKing()
     }
   }
 
@@ -204,7 +191,7 @@ export class CheckersService {
     )
     .map(item => item.asString())
     .includes(step.getTargetCell().asString())
-
+    
     if (!isAvailableMove) {
       throw new WsException('Is not valid move')
     }
@@ -247,7 +234,7 @@ export class CheckersService {
     ): Array<CellCoordinate> => {
 
     let availableMovesForDirection: Array<CellCoordinate> = []
-    let foundCellsWithCheckers: Array<Cell> = []
+    let isCheckerFound = false
     let numberOfIteration: number = 0
     let isMoveBack: boolean = currentChecker.isWhite() ? !isVerticalUp : isVerticalUp
 
@@ -289,47 +276,14 @@ export class CheckersService {
           continueCounting = false
         }
       } else {
-        
-        if (currentChecker.isKing()) {
-          if (foundCellsWithCheckers.length) {
-            let isNearCell = 
-            Math.abs(
-              foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
-            ) === 1
 
-            if (isNearCell) {
-              continueCounting = false
-            } else {
-              availableMovesForDirection.push(foundCell.getCoordinates())
-              foundCellsWithCheckers.unshift(foundCell)
-            }
-          } else {
-            let isMyChecker = foundCell.getChecker().isWhite() === currentChecker.isWhite()
-
-            if (isMyChecker) {
-              continueCounting = false
-            } else {
-              availableMovesForDirection.push(foundCell.getCoordinates())
-              foundCellsWithCheckers.unshift(foundCell)
-            }
-          }
+        if (isCheckerFound) {
+          continueCounting = false 
         } else {
-          if (foundCellsWithCheckers.length) {
-            let nearCell = Math.abs(
-              foundCellsWithCheckers[0].getCoordinates().getNumber() - foundCell.getCoordinates().getNumber()
-            ) === 1
-            if (nearCell) {
-              availableMovesForDirection = []
-            }
-          } else {
-            if (foundCell.getChecker().isWhite() === currentChecker.isWhite()) {
-              continueCounting = false
-            } else {
-              availableMovesForDirection.push(foundCell.getCoordinates())
-              foundCellsWithCheckers.unshift(foundCell)
-            }
-          }
+          availableMovesForDirection.push(foundCell.getCoordinates())
+          isCheckerFound = true
         }
+
       }
 
       let maxReached = maxAvailableStepsReached(foundCell.getCoordinates())
@@ -346,7 +300,7 @@ export class CheckersService {
 
   }
 
-  hasNeedToTakeFigure (currentChecker: Checker, game: CheckersGame, step: Step): boolean {
+  hasNeedToTakeFigure (currentChecker: Checker, justTakedChecker: CellCoordinate, game: CheckersGame, step: Step): boolean {
 
     let availableCells: Array<Array<CellCoordinate>> = []
 
@@ -367,13 +321,14 @@ export class CheckersService {
         if (!checker.isNull() 
             && checker.isWhite() !== currentChecker.isWhite()
             && cellCoordinatesChunk.indexOf(cell) !== cellCoordinatesChunk.length - 1
+            && justTakedChecker.asString() !== cell.asString()
         ) {
           checkersForTake.push(cell)
         }
       })
     })
 
-    console.log('С тейками', checkersForTake)
+    // console.log('Для тейка', checkersForTake)
 
     if (game.isLongMoveNow()) {
       checkersForTake = checkersForTake
@@ -384,10 +339,10 @@ export class CheckersService {
       )
     }
 
-    console.log('битые', game.getLongMoveCheckersForTaking()
-    .map(item => item.asString()))
+    // console.log('битые', game.getLongMoveCheckersForTaking()
+    // .map(item => item.asString()))
 
-    console.log('После фильтрации', checkersForTake)
+    // console.log('После фильтрации', checkersForTake)
 
     return Boolean(checkersForTake.length)
   }
@@ -416,9 +371,20 @@ export class CheckersService {
     })
 
     if (game.isLongMoveNow()) {
-      movesWithTakes = movesWithTakes.filter(cellCoordinatesChunk => {
+      movesWithTakes = movesWithTakes
+      .filter(cellCoordinatesChunk => {
         let intersection = _.intersection(cellCoordinatesChunk, game.getLongMoveCheckersForTaking())
         return !intersection.length
+      })//todo порядок?
+      .map(cellCoordinatesChunk => {
+        let checker = cellCoordinatesChunk
+        .find(item => game.getBoard().getCellByCoordinates(item).hasChecker())
+        console.log('index', cellCoordinatesChunk.indexOf(checker))
+        console.log('cellCoordinatesChunk до', cellCoordinatesChunk)
+        // cellCoordinatesChunk = cellCoordinatesChunk.slice(0, cellCoordinatesChunk.indexOf(checker))
+        cellCoordinatesChunk = cellCoordinatesChunk.splice(cellCoordinatesChunk.indexOf(checker))
+        console.log('cellCoordinatesChunk до', cellCoordinatesChunk)
+        return cellCoordinatesChunk
       })
     }
 
@@ -453,6 +419,7 @@ export class CheckersService {
     let winner: CheckersPlayer
 
     game.getPlayers().forEach(player => {
+
       let opponent = game.getPlayers().find(item => item.getId() !== player.getId())
 
       let cellsWithPlayersCheckers = game.getBoard()
@@ -465,27 +432,30 @@ export class CheckersService {
         winner = opponent
       }
 
-      let userHasMoves = false
+      // if (!winner) {
 
-      for (let cell of cellsWithPlayersCheckers) {
-        if (
-          this.getAvailableMoves(
-            game.getBoard().getCellByCoordinates(cell.getCoordinates()).getChecker(),
-            game,
-            cell.getCoordinates()
-          ).length
-        ) {
-          userHasMoves = true
-          break
-        }
-      }
+      //   let userHasMoves = false
 
-      if (!userHasMoves) {
-        winner = opponent
-      }
+      //   for (let cell of cellsWithPlayersCheckers) {
+      //     if (
+      //       this.getAvailableMoves(
+      //         game.getBoard().getCellByCoordinates(cell.getCoordinates()).getChecker(),
+      //         game,
+      //         cell.getCoordinates()
+      //       ).length
+      //     ) {
+      //       userHasMoves = true
+      //       break
+      //     }
+      //   }
 
+      //   if (!userHasMoves) {
+      //     winner = opponent
+      //   }
+      // }
     })
 
     return winner
+
   }
 }

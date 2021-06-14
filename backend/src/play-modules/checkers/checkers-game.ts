@@ -64,6 +64,7 @@ export class CheckersGame extends Game {
     return this.longMove.inProgress
   }
   addStepToLongMove (step: Step): void {
+    // todo порядок?
     this.longMove.moves.push(step)
   }
   addCheckerForTakeToLongMove (cellCoordinate: CellCoordinate): void {

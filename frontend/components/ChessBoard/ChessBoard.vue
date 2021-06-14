@@ -43,7 +43,9 @@ export default {
     console.log('boardState', this.boardState)
   },
   watch : {
-    
+    availableMoves (v) {
+      // console.log('availableMoves на доске', this.availableMoves)
+    }
   },
   computed : {
     cells () {

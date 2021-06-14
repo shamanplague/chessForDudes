@@ -14,8 +14,11 @@ export default (() => {
     // {checker: new Checker(false), coordinates: new CellCoordinate('c3')},
     // {checker: new Checker(false), coordinates: new CellCoordinate('e5')},
     // {checker: new Checker(false), coordinates: new CellCoordinate('g7')},
+    // {checker: new Checker(false), coordinates: new CellCoordinate('g5')},
     // {checker: new Checker(false), coordinates: new CellCoordinate('c5')},
     // {checker: new Checker(false), coordinates: new CellCoordinate('c7')},
+
+    
 
     {checker: new Checker(true), coordinates: new CellCoordinate('a1')},
     {checker: new Checker(true), coordinates: new CellCoordinate('c1')},

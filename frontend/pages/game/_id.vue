@@ -44,7 +44,20 @@ export default {
   mounted () {
     this.gameId = +this.$route.params.id
   },
-  computed : {
+  watch: {
+    'activeGame.longMove.inProgress' (oldV, newV) {
+      if (oldV && !newV) {
+        console.log('Лонг мув начался')
+      } else if (!oldV && newV) {
+        console.log('Лонг мув законичлся')
+        this.availableMoves = []
+      }
+    },
+  },
+  computed: {
+    isLongMoveNow () {
+      return this.activeGame.longMove.inProgress
+    },
     activeGame () {
       // if (this.$store.state.activeGames[0]) {
       //   console.log('activeGame.usersColorIsWhite', this.$store.state.activeGames[0].usersColorIsWhite)
@@ -59,7 +72,10 @@ export default {
   },
   methods : {
     makeMove (coordinates) {
-      this.availableMoves = []
+
+      if (!this.isLongMoveNow) {
+        this.availableMoves = []
+      }
       
       if (this.activeGame.longMove.inProgress) {
         coordinates.from = this.activeGame.longMove.moves[this.activeGame.longMove.moves.length - 1]
